@@ -12,96 +12,103 @@
 
 /*
   EO Q4 Forum Command Center — design system
-  Palette: deep navy + brass/gold, built for a small group of
-  private, senior business owners. Deliberately not another
-  teal SaaS dashboard — warmer, more "boardroom," Q4/harvest-toned.
+  Lane A "Quiet Luxury": warm bone canvas, obsidian ink, refined bronze.
+  Built for a small group of senior business owners — a private members'
+  club feel. Light-first and high-contrast for legibility; bronze is the
+  single restrained accent (drawn from the Q4 logo mark).
 */
 :root {
   --radius: 0.625rem;
 
   /* Base surfaces */
-  --background: #F7F4EE;       /* warm parchment, not clinical white */
-  --foreground: #17181D;       /* near-ink */
-  --card: #FFFFFF;
-  --card-foreground: #17181D;
-  --popover: #FFFFFF;
-  --popover-foreground: #17181D;
+  --background: #F4F1EA;        /* warm bone */
+  --foreground: #24211B;        /* warm ink */
+  --card: #FCFAF5;              /* soft off-white */
+  --card-foreground: #24211B;
+  --popover: #FCFAF5;
+  --popover-foreground: #24211B;
 
   /* Brand */
-  --primary: #10233F;          /* deep navy */
-  --primary-foreground: #F7F4EE;
-  --secondary: #EFE9DC;        /* warm sand */
-  --secondary-foreground: #10233F;
-  --accent: #B8863B;           /* brass / gold — Q4 accent */
-  --accent-foreground: #17181D;
+  --primary: #26231D;           /* obsidian ink */
+  --primary-foreground: #F4F1EA;
+  --secondary: #EAE3D5;         /* warm sand */
+  --secondary-foreground: #26231D;
+  --accent: #9A7748;            /* refined bronze — Q4 accent */
+  --accent-foreground: #F7F2E9;
 
-  --muted: #ECE7DC;
-  --muted-foreground: #5B5847;
+  --muted: #ECE6DA;
+  --muted-foreground: #6E6656;
 
-  --destructive: #A1332A;
-  --destructive-foreground: #F7F4EE;
-  --success: #2F6D4F;
-  --success-foreground: #F7F4EE;
-  --warning: #A6621A;
-  --warning-foreground: #F7F4EE;
+  --destructive: #9B3B2F;
+  --destructive-foreground: #F7F2E9;
+  --success: #3C6B4E;
+  --success-foreground: #F7F2E9;
+  --warning: #9A6B2E;
+  --warning-foreground: #F7F2E9;
 
-  --border: #DED6C2;
-  --input: #DED6C2;
-  --ring: #B8863B;
+  --border: #E1D9C9;
+  --input: #E1D9C9;
+  --ring: #9A7748;
 
-  --sidebar: #0B182E;          /* darker navy than primary, for the admin/member shell */
-  --sidebar-foreground: #E8E2D2;
-  --sidebar-primary: #B8863B;
-  --sidebar-primary-foreground: #0B182E;
-  --sidebar-accent: #16264A;
-  --sidebar-accent-foreground: #E8E2D2;
-  --sidebar-border: #1B2D52;
-  --sidebar-ring: #B8863B;
+  --sidebar: #EEE8DC;           /* readable warm panel (was dark navy) */
+  --sidebar-foreground: #3B362C;
+  --sidebar-primary: #8A6A3F;   /* bronze active state */
+  --sidebar-primary-foreground: #F7F2E9;
+  --sidebar-accent: #E4DBC9;    /* hover surface */
+  --sidebar-accent-foreground: #26231D;
+  --sidebar-border: #DCD2BF;
+  --sidebar-ring: #9A7748;
 
-  --chart-1: #B8863B;
-  --chart-2: #10233F;
-  --chart-3: #2F6D4F;
-  --chart-4: #7A5C2E;
-  --chart-5: #5B5847;
+  --chart-1: #9A7748;
+  --chart-2: #26231D;
+  --chart-3: #3C6B4E;
+  --chart-4: #B08D57;
+  --chart-5: #6E6656;
 }
 
 .dark {
-  --background: #0B0E14;
-  --foreground: #EDE8DA;
-  --card: #12151D;
-  --card-foreground: #EDE8DA;
-  --popover: #12151D;
-  --popover-foreground: #EDE8DA;
+  --background: #16140F;        /* warm charcoal (not navy, not black) */
+  --foreground: #ECE6D8;
+  --card: #1E1B15;
+  --card-foreground: #ECE6D8;
+  --popover: #1E1B15;
+  --popover-foreground: #ECE6D8;
 
-  --primary: #C7A15A;
-  --primary-foreground: #0B0E14;
-  --secondary: #1A2033;
-  --secondary-foreground: #EDE8DA;
-  --accent: #C7A15A;
-  --accent-foreground: #0B0E14;
+  --primary: #C9A66B;           /* bronze */
+  --primary-foreground: #16140F;
+  --secondary: #29241B;
+  --secondary-foreground: #ECE6D8;
+  --accent: #C9A66B;
+  --accent-foreground: #16140F;
 
-  --muted: #171B26;
-  --muted-foreground: #A6A08D;
+  --muted: #221E17;
+  --muted-foreground: #A79E8A;
 
   --destructive: #C24A3F;
-  --destructive-foreground: #0B0E14;
-  --success: #3E9271;
-  --success-foreground: #0B0E14;
+  --destructive-foreground: #16140F;
+  --success: #4E9573;
+  --success-foreground: #16140F;
   --warning: #C98A3B;
-  --warning-foreground: #0B0E14;
+  --warning-foreground: #16140F;
 
-  --border: #232838;
-  --input: #232838;
-  --ring: #C7A15A;
+  --border: #302A20;
+  --input: #302A20;
+  --ring: #C9A66B;
 
-  --sidebar: #070B14;
-  --sidebar-foreground: #EDE8DA;
-  --sidebar-primary: #C7A15A;
-  --sidebar-primary-foreground: #070B14;
-  --sidebar-accent: #12182B;
-  --sidebar-accent-foreground: #EDE8DA;
-  --sidebar-border: #1A2138;
-  --sidebar-ring: #C7A15A;
+  --sidebar: #110F0A;
+  --sidebar-foreground: #ECE6D8;
+  --sidebar-primary: #C9A66B;
+  --sidebar-primary-foreground: #110F0A;
+  --sidebar-accent: #201C14;
+  --sidebar-accent-foreground: #ECE6D8;
+  --sidebar-border: #2A241A;
+  --sidebar-ring: #C9A66B;
+
+  --chart-1: #C9A66B;
+  --chart-2: #ECE6D8;
+  --chart-3: #4E9573;
+  --chart-4: #B08D57;
+  --chart-5: #A79E8A;
 }
 
 @theme inline {
