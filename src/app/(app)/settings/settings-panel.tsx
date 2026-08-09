@@ -9,7 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { setNotificationPref, changePassword } from "./actions";
+
+function initials(name: string | null) {
+  if (!name) return "?";
+  return name.split(" ").map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+}
 
 function SubmitButton({ pending }: { pending: boolean }) {
   return (
@@ -21,10 +27,14 @@ function SubmitButton({ pending }: { pending: boolean }) {
 
 export function SettingsPanel({
   email,
+  fullName,
+  photoUrl,
   emailNotifications,
   inAppNotifications,
 }: {
   email: string;
+  fullName: string | null;
+  photoUrl: string | null;
   emailNotifications: boolean;
   inAppNotifications: boolean;
 }) {
@@ -58,9 +68,20 @@ export function SettingsPanel({
           <CardTitle className="flex items-center gap-2 text-base">
             <UserCircle className="h-4 w-4 text-accent" /> Profile
           </CardTitle>
-          <CardDescription>Signed in as {email}.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12">
+              {photoUrl ? <AvatarImage src={photoUrl} alt={fullName ?? ""} /> : null}
+              <AvatarFallback className="bg-secondary text-secondary-foreground">
+                {initials(fullName)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">{fullName ?? "Member"}</p>
+              <p className="text-sm text-muted-foreground">{email}</p>
+            </div>
+          </div>
           <Button asChild variant="outline">
             <Link href="/bio/edit">Edit my bio</Link>
           </Button>
