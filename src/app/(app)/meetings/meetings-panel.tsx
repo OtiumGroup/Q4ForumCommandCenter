@@ -168,7 +168,7 @@ export function MeetingsPanel({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary to-sidebar px-6 py-8 text-primary-foreground shadow-sm sm:px-8 sm:py-10">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-card px-6 py-8 shadow-sm sm:px-8 sm:py-10">
         <div
           className="pointer-events-none absolute inset-0 opacity-25"
           style={{ backgroundImage: "radial-gradient(circle at 85% 20%, var(--accent) 0%, transparent 45%)" }}
@@ -182,7 +182,7 @@ export function MeetingsPanel({
               {next ? next.title : "No meetings scheduled"}
             </h1>
             {next && (
-              <p className="mt-2 text-sm text-primary-foreground/70">
+              <p className="mt-2 text-sm text-muted-foreground">
                 {new Date(next.starts_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} ·{" "}
                 {formatTimeRange(next.starts_at, next.ends_at)}
                 {next.location && ` · ${next.location}`}

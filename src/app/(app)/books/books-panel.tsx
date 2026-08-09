@@ -262,7 +262,7 @@ export function BooksPanel({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="relative mb-6 overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary to-sidebar px-6 py-7 text-primary-foreground shadow-sm sm:px-8">
+      <div className="relative mb-6 overflow-hidden rounded-xl border border-border bg-card px-6 py-7 shadow-sm sm:px-8">
         <div
           className="pointer-events-none absolute inset-0 opacity-25"
           style={{ backgroundImage: "radial-gradient(circle at 85% 20%, var(--accent) 0%, transparent 45%)" }}

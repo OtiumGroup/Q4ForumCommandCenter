@@ -389,7 +389,7 @@ export function EventsPanel({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary to-sidebar px-6 py-8 text-primary-foreground shadow-sm sm:px-8 sm:py-10">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-card px-6 py-8 shadow-sm sm:px-8 sm:py-10">
         <div
           className="pointer-events-none absolute inset-0 opacity-25"
           style={{ backgroundImage: "radial-gradient(circle at 85% 20%, var(--accent) 0%, transparent 45%)" }}
@@ -402,7 +402,7 @@ export function EventsPanel({
             <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
               {next ? next.title : "Nothing on the calendar"}
             </h1>
-            <p className="mt-2 text-sm text-primary-foreground/70">
+            <p className="mt-2 text-sm text-muted-foreground">
               EO events and member get-togethers — RSVP so everyone knows who&apos;s in.
             </p>
           </div>
