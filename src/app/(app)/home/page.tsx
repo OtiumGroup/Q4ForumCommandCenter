@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { splitUpcoming } from "@/lib/time";
+import { splitUpcoming, nextBirthdayWithin } from "@/lib/time";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bell, CalendarDays, MapPin, PartyPopper } from "lucide-react";
+import { Bell, Cake, CalendarDays, MapPin, PartyPopper } from "lucide-react";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -15,7 +15,7 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: profile }, { data: broadcasts }, { data: meetings }, { data: events }] =
+  const [{ data: profile }, { data: broadcasts }, { data: meetings }, { data: events }, { data: birthdayProfiles }] =
     await Promise.all([
       supabase.from("profiles").select("full_name").eq("id", user?.id ?? "").single(),
       supabase
@@ -31,6 +31,7 @@ export default async function HomePage() {
         .from("events")
         .select("id, title, starts_at, address, notify_forum, created_at")
         .order("starts_at", { ascending: true }),
+      supabase.from("profiles").select("id, full_name, birthday").not("birthday", "is", null),
     ]);
 
   const firstName = profile?.full_name?.split(" ")[0];
@@ -61,12 +62,27 @@ export default async function HomePage() {
 
   const { upcoming: upcomingMeetings } = splitUpcoming(meetings ?? []);
   const { upcoming: upcomingEvents } = splitUpcoming(events ?? []);
+
+  const upcomingBirthdays = (birthdayProfiles ?? [])
+    .map((p) => {
+      const next = nextBirthdayWithin(p.birthday, 60);
+      return next ? { id: p.id, name: p.full_name ?? "Member", date: next } : null;
+    })
+    .filter((b): b is { id: string; name: string; date: Date } => b !== null);
+
   const nextUp = [
     ...upcomingMeetings.slice(0, 3).map((m) => ({ id: m.id, title: m.title, starts_at: m.starts_at, location: m.location, type: "meeting" as const })),
     ...upcomingEvents.slice(0, 3).map((e) => ({ id: e.id, title: e.title, starts_at: e.starts_at, location: e.address, type: "event" as const })),
+    ...upcomingBirthdays.map((b) => ({
+      id: b.id,
+      title: `${b.name}'s birthday`,
+      starts_at: b.date.toISOString(),
+      location: null as string | null,
+      type: "birthday" as const,
+    })),
   ]
     .sort((a, b) => (a.starts_at > b.starts_at ? 1 : -1))
-    .slice(0, 5);
+    .slice(0, 6);
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -124,10 +140,15 @@ export default async function HomePage() {
                 {nextUp.map((item) => (
                   <li key={`${item.type}-${item.id}`}>
                     <Link
-                      href={item.type === "meeting" ? "/meetings" : "/events"}
+                      href={
+                        item.type === "meeting" ? "/meetings" : item.type === "event" ? "/events" : `/bio/${item.id}`
+                      }
                       className="block rounded-md p-2 -m-2 transition-colors hover:bg-secondary"
                     >
-                      <p className="text-sm font-medium">{item.title}</p>
+                      <p className="flex items-center gap-1.5 text-sm font-medium">
+                        {item.type === "birthday" && <Cake className="h-3.5 w-3.5 text-accent" />}
+                        {item.title}
+                      </p>
                       <p className="text-xs text-muted-foreground">{formatDate(item.starts_at)}</p>
                       {item.location && (
                         <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
