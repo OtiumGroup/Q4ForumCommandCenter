@@ -1,12 +1,23 @@
-import { ComingSoon } from "@/components/shared/coming-soon";
-import { Settings } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { SettingsPanel } from "./settings-panel";
 
-export default function Page() {
+export default async function SettingsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email_notifications, in_app_notifications")
+    .eq("id", user?.id ?? "")
+    .single();
+
   return (
-    <ComingSoon
-      icon={Settings}
-      title="Settings"
-      description="Your profile, notifications, and app preferences."
+    <SettingsPanel
+      email={user?.email ?? ""}
+      emailNotifications={profile?.email_notifications ?? true}
+      inAppNotifications={profile?.in_app_notifications ?? true}
     />
   );
 }
