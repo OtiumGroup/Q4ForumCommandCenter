@@ -296,24 +296,28 @@ export function ResourcesPanel({
                       <ul>
                         {items.map((r) => (
                           <li key={r.id}>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedId(r.id)}
-                              className={`flex w-full items-center justify-between gap-2 py-2 pl-7 pr-3 text-left text-sm transition-colors hover:bg-secondary/60 ${
-                                selectedId === r.id ? "bg-accent/10 font-medium text-accent" : "text-foreground"
+                            <div
+                              className={`flex w-full items-center justify-between gap-2 pl-7 pr-3 text-sm transition-colors hover:bg-secondary/60 ${
+                                selectedId === r.id ? "bg-accent/10" : ""
                               }`}
                             >
-                              <span className="flex items-center gap-2 truncate">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedId(r.id)}
+                                className={`flex flex-1 items-center gap-2 truncate py-2 text-left ${
+                                  selectedId === r.id ? "font-medium text-accent" : "text-foreground"
+                                }`}
+                              >
                                 <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                                 <span className="truncate">{r.title}</span>
-                              </span>
+                              </button>
                               {isAdmin && (
-                                <Trash2
-                                  role="button"
+                                <button
+                                  type="button"
                                   aria-label="Delete resource"
-                                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground hover:text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                  disabled={pendingId === r.id}
+                                  className="shrink-0 p-1 text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
+                                  onClick={() => {
                                     setPendingId(r.id);
                                     startTransition(async () => {
                                       const res = await deleteEoResource(r.id, r.file_path);
@@ -322,10 +326,11 @@ export function ResourcesPanel({
                                       else if (selectedId === r.id) setSelectedId(null);
                                     });
                                   }}
-                                  style={{ opacity: pendingId === r.id ? 0.4 : 1 }}
-                                />
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
                               )}
-                            </button>
+                            </div>
                           </li>
                         ))}
                       </ul>

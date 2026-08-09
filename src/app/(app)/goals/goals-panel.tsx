@@ -68,7 +68,12 @@ function initials(name: string | null) {
 
 function isOverdue(goal: Goal) {
   if (!goal.due_date || goal.status === "done") return false;
-  return new Date(goal.due_date) < new Date(new Date().toDateString());
+  // Compare plain YYYY-MM-DD strings so we're not mixing UTC-midnight
+  // (new Date("YYYY-MM-DD")) with local-midnight (new Date().toDateString())
+  // parsing — that mismatch flagged goals due "today" as overdue a day early
+  // in timezones behind UTC (e.g. Fort Worth).
+  const todayStr = new Date().toLocaleDateString("en-CA"); // en-CA => YYYY-MM-DD, local time
+  return goal.due_date < todayStr;
 }
 
 function GoalDialog({ goal, trigger }: { goal?: Goal; trigger: React.ReactNode }) {

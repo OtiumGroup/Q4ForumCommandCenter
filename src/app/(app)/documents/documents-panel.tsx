@@ -111,7 +111,7 @@ function UploadDialog({ categories, userId }: { categories: Category[]; userId: 
         if (uploadError) throw uploadError;
 
         formData.set("file_path", path);
-        formData.set("file_type", file.type || file.name.split(".").pop() || "");
+        formData.set("file_type", file.name.split(".").pop() || file.type || "");
 
         const res = await recordDocument({ ok: false }, formData);
         if (!res.ok) throw new Error(res.message);
@@ -417,24 +417,28 @@ export function DocumentsPanel({
                           <ul>
                             {items.map((doc) => (
                               <li key={doc.id}>
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedId(doc.id)}
-                                  className={`flex w-full items-center justify-between gap-2 py-2 pl-7 pr-3 text-left text-sm transition-colors hover:bg-secondary/60 ${
-                                    selectedId === doc.id ? "bg-accent/10 font-medium text-accent" : "text-foreground"
+                                <div
+                                  className={`flex w-full items-center justify-between gap-2 pl-7 pr-3 text-sm transition-colors hover:bg-secondary/60 ${
+                                    selectedId === doc.id ? "bg-accent/10" : ""
                                   }`}
                                 >
-                                  <span className="flex items-center gap-2 truncate">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedId(doc.id)}
+                                    className={`flex flex-1 items-center gap-2 truncate py-2 text-left ${
+                                      selectedId === doc.id ? "font-medium text-accent" : "text-foreground"
+                                    }`}
+                                  >
                                     <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                                     <span className="truncate">{doc.title}</span>
-                                  </span>
+                                  </button>
                                   {(doc.uploaded_by === currentUserId || isAdmin) && (
-                                    <Trash2
-                                      role="button"
+                                    <button
+                                      type="button"
                                       aria-label="Delete document"
-                                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground hover:text-destructive"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
+                                      disabled={pendingId === doc.id}
+                                      className="shrink-0 p-1 text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
+                                      onClick={() => {
                                         setPendingId(doc.id);
                                         startTransition(async () => {
                                           const res = await deleteDocument(doc.id, doc.file_path);
@@ -443,10 +447,11 @@ export function DocumentsPanel({
                                           else if (selectedId === doc.id) setSelectedId(null);
                                         });
                                       }}
-                                      style={{ opacity: pendingId === doc.id ? 0.4 : 1 }}
-                                    />
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
                                   )}
-                                </button>
+                                </div>
                               </li>
                             ))}
                           </ul>
