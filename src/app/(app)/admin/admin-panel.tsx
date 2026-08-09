@@ -2,12 +2,13 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
-import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail } from "lucide-react";
+import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
@@ -69,6 +70,17 @@ function statusVariant(status: string) {
   if (status === "active" || status === "accepted") return "default" as const;
   if (status === "invited" || status === "pending") return "secondary" as const;
   return "destructive" as const;
+}
+
+function initials(name: string | null) {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
@@ -245,39 +257,41 @@ function UsersTab({ members, currentUserId }: { members: Member[]; currentUserId
         <InviteDialog />
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-10" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        {members.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">No members yet.</p>
+        ) : (
+          <ul className="divide-y divide-border">
             {members.map((m) => (
-              <TableRow key={m.id}>
-                <TableCell className="font-medium">{m.full_name ?? "—"}</TableCell>
-                <TableCell className="text-muted-foreground">{m.email ?? "—"}</TableCell>
-                <TableCell className="capitalize">{m.role}</TableCell>
-                <TableCell>
+              <li key={m.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    {m.photo_url ? <AvatarImage src={m.photo_url} alt={m.full_name ?? ""} /> : null}
+                    <AvatarFallback className="bg-secondary text-sm text-secondary-foreground">
+                      {initials(m.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="flex items-center gap-2 font-medium">
+                      {m.full_name ?? "—"}
+                      {m.role === "admin" && (
+                        <Badge variant="outline" className="border-accent text-[10px] uppercase tracking-wide text-accent">
+                          Admin
+                        </Badge>
+                      )}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{m.email ?? "—"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
                   <Badge variant={statusVariant(m.status)} className="capitalize">
                     {m.status}
                   </Badge>
-                </TableCell>
-                <TableCell>{m.id !== currentUserId && <DeleteMemberButton member={m} />}</TableCell>
-              </TableRow>
+                  {m.id !== currentUserId && <DeleteMemberButton member={m} />}
+                </div>
+              </li>
             ))}
-            {members.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
-                  No members yet.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+          </ul>
+        )}
       </CardContent>
     </Card>
   );
@@ -319,36 +333,42 @@ function InvitesTab({ invites }: { invites: Invite[] }) {
                 <TableCell>
                   {inv.status === "pending" && (
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Resend invite"
-                        disabled={pendingId === inv.id}
-                        onClick={async () => {
+                      <AlertConfirm
+                        trigger={
+                          <Button variant="ghost" size="icon" aria-label="Resend invite" disabled={pendingId === inv.id}>
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        }
+                        title="Resend this invite?"
+                        description={`A fresh invite email will be sent to ${inv.email}.`}
+                        confirmLabel="Resend"
+                        pending={pendingId === inv.id}
+                        onConfirm={async () => {
                           setPendingId(inv.id);
                           const res = await resendInvite(inv.email);
                           setPendingId(null);
                           if (res.ok) toast.success("Invite resent.");
                           else toast.error(res.message ?? "Could not resend invite.");
                         }}
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Revoke invite"
-                        disabled={pendingId === inv.id}
-                        onClick={async () => {
+                      />
+                      <AlertConfirm
+                        trigger={
+                          <Button variant="ghost" size="icon" aria-label="Revoke invite" disabled={pendingId === inv.id}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        }
+                        title="Revoke this invite?"
+                        description={`${inv.email} will no longer be able to use this invite link. This can't be undone.`}
+                        confirmLabel="Revoke"
+                        pending={pendingId === inv.id}
+                        onConfirm={async () => {
                           setPendingId(inv.id);
                           const res = await revokeInvite(inv.id);
                           setPendingId(null);
                           if (res.ok) toast.success("Invite revoked.");
                           else toast.error(res.message ?? "Could not revoke invite.");
                         }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      />
                     </div>
                   )}
                 </TableCell>
@@ -465,6 +485,9 @@ export function AdminPanel({
   invites: Invite[];
   broadcasts: Broadcast[];
 }) {
+  const activeMembers = members.filter((m) => m.status === "active").length;
+  const pendingInvites = invites.filter((i) => i.status === "pending").length;
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="mb-6">
@@ -472,6 +495,31 @@ export function AdminPanel({
         <p className="mt-1 text-sm text-muted-foreground">
           Manage members, invitations, and forum-wide communications.
         </p>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:max-w-md">
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-accent">
+              <UserCheck className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-display text-xl font-semibold leading-none">{activeMembers}</p>
+              <p className="text-xs text-muted-foreground">Active members</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-accent">
+              <Clock className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-display text-xl font-semibold leading-none">{pendingInvites}</p>
+              <p className="text-xs text-muted-foreground">Pending invites</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="users">

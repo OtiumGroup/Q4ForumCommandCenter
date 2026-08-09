@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Plus, Target, HandHeart, Pencil, Trash2, Briefcase, Heart, Sparkles } from "lucide-react";
+import { Plus, Target, HandHeart, Pencil, Trash2, Briefcase, Heart, Sparkles, AlertTriangle, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +64,11 @@ const STATUS_CLASS: Record<Status, string> = {
 function initials(name: string | null) {
   if (!name) return "?";
   return name.split(" ").map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+}
+
+function isOverdue(goal: Goal) {
+  if (!goal.due_date || goal.status === "done") return false;
+  return new Date(goal.due_date) < new Date(new Date().toDateString());
 }
 
 function GoalDialog({ goal, trigger }: { goal?: Goal; trigger: React.ReactNode }) {
@@ -164,9 +169,10 @@ function GoalDialog({ goal, trigger }: { goal?: Goal; trigger: React.ReactNode }
 function MyGoalCard({ goal }: { goal: Goal }) {
   const [pending, startTransition] = useTransition();
   const Icon = AREA_ICON[goal.area];
+  const overdue = isOverdue(goal);
 
   return (
-    <Card>
+    <Card className={overdue ? "border-destructive/50" : undefined}>
       <CardContent className="space-y-2 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-2">
@@ -175,8 +181,9 @@ function MyGoalCard({ goal }: { goal: Goal }) {
               <p className="font-medium">{goal.title}</p>
               {goal.details && <p className="mt-0.5 text-sm text-muted-foreground">{goal.details}</p>}
               {goal.due_date && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Due {new Date(goal.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                <p className={`mt-1 text-xs ${overdue ? "font-medium text-destructive" : "text-muted-foreground"}`}>
+                  {overdue ? "Overdue — was due" : "Due"}{" "}
+                  {new Date(goal.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                 </p>
               )}
             </div>
@@ -263,6 +270,11 @@ export function GoalsPanel({
     return m;
   }, [forumGoals]);
 
+  const totalGoals = goals.length;
+  const atRisk = goals.filter((g) => g.status === "at_risk").length;
+  const needingHelp = goals.filter((g) => g.needs_help).length;
+  const overdueCount = goals.filter(isOverdue).length;
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="mb-6 flex items-start justify-between gap-4">
@@ -277,6 +289,53 @@ export function GoalsPanel({
             <Plus className="mr-1.5 h-4 w-4" /> New goal
           </Button>
         } />
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:max-w-2xl">
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-accent">
+              <ListChecks className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-display text-xl font-semibold leading-none">{totalGoals}</p>
+              <p className="text-xs text-muted-foreground">Total goals</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/20 text-warning-foreground">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-display text-xl font-semibold leading-none">{atRisk}</p>
+              <p className="text-xs text-muted-foreground">At risk</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <HandHeart className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-display text-xl font-semibold leading-none">{needingHelp}</p>
+              <p className="text-xs text-muted-foreground">Need help</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-display text-xl font-semibold leading-none">{overdueCount}</p>
+              <p className="text-xs text-muted-foreground">Overdue</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="mine">
@@ -339,6 +398,11 @@ export function GoalsPanel({
                           <span className="text-sm">{g.title}</span>
                         </div>
                         <div className="flex items-center gap-2">
+                          {isOverdue(g) && (
+                            <Badge variant="destructive" className="gap-1">
+                              <AlertTriangle className="h-3 w-3" /> Overdue
+                            </Badge>
+                          )}
                           {g.needs_help && (
                             <Badge variant="destructive" className="gap-1">
                               <HandHeart className="h-3 w-3" /> Needs help

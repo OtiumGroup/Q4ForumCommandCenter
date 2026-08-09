@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -65,6 +66,13 @@ const TYPE_LABEL: Record<MediaType, string> = {
   audiobook: "Audiobook",
   podcast: "Podcast",
 };
+
+type ProfileLite = { id: string; full_name: string | null; photo_url: string | null };
+
+function initials(name: string | null) {
+  if (!name) return "?";
+  return name.split(" ").map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+}
 
 function AddMediaDialog() {
   const [open, setOpen] = useState(false);
@@ -213,10 +221,12 @@ function AddMediaDialog() {
 
 export function BooksPanel({
   items,
+  profiles,
   currentUserId,
   isAdmin,
 }: {
   items: MediaItem[];
+  profiles: ProfileLite[];
   currentUserId: string;
   isAdmin: boolean;
 }) {
@@ -225,6 +235,12 @@ export function BooksPanel({
   const [query, setQuery] = useState("");
   const [, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
+
+  const profileById = useMemo(() => {
+    const m = new Map<string, ProfileLite>();
+    profiles.forEach((p) => m.set(p.id, p));
+    return m;
+  }, [profiles]);
 
   const topics = useMemo(() => {
     const set = new Set<string>();
@@ -246,12 +262,18 @@ export function BooksPanel({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Books &amp; Podcasts</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Recommendations from the forum.</p>
+      <div className="relative mb-6 overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary to-sidebar px-6 py-7 text-primary-foreground shadow-sm sm:px-8">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-25"
+          style={{ backgroundImage: "radial-gradient(circle at 85% 20%, var(--accent) 0%, transparent 45%)" }}
+        />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent">Recommended by the forum</p>
+            <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Books &amp; Podcasts</h1>
+          </div>
+          <AddMediaDialog />
         </div>
-        <AddMediaDialog />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -315,6 +337,21 @@ export function BooksPanel({
                 {item.author_or_host && <p className="text-sm text-muted-foreground">{item.author_or_host}</p>}
                 {item.description && (
                   <p className="line-clamp-3 text-sm text-muted-foreground">{item.description}</p>
+                )}
+                {item.added_by && profileById.get(item.added_by) && (
+                  <div className="flex items-center gap-1.5 pt-1">
+                    <Avatar className="h-5 w-5">
+                      {profileById.get(item.added_by)?.photo_url ? (
+                        <AvatarImage src={profileById.get(item.added_by)?.photo_url ?? undefined} alt="" />
+                      ) : null}
+                      <AvatarFallback className="bg-secondary text-[9px] text-secondary-foreground">
+                        {initials(profileById.get(item.added_by)?.full_name ?? null)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-muted-foreground">
+                      Recommended by {profileById.get(item.added_by)?.full_name ?? "a member"}
+                    </span>
+                  </div>
                 )}
                 <div className="flex items-center justify-between pt-1">
                   {item.external_link ? (
