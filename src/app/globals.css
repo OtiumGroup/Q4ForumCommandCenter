@@ -1,0 +1,168 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Self-hosted serif for headings — no external font requests (privacy-conscious by design) */
+@import "@fontsource/fraunces/400.css";
+@import "@fontsource/fraunces/500.css";
+@import "@fontsource/fraunces/600.css";
+@import "@fontsource/fraunces/700.css";
+@import "@fontsource/fraunces/600-italic.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  EO Q4 Forum Command Center — design system
+  Palette: deep navy + brass/gold, built for a small group of
+  private, senior business owners. Deliberately not another
+  teal SaaS dashboard — warmer, more "boardroom," Q4/harvest-toned.
+*/
+:root {
+  --radius: 0.625rem;
+
+  /* Base surfaces */
+  --background: #F7F4EE;       /* warm parchment, not clinical white */
+  --foreground: #17181D;       /* near-ink */
+  --card: #FFFFFF;
+  --card-foreground: #17181D;
+  --popover: #FFFFFF;
+  --popover-foreground: #17181D;
+
+  /* Brand */
+  --primary: #10233F;          /* deep navy */
+  --primary-foreground: #F7F4EE;
+  --secondary: #EFE9DC;        /* warm sand */
+  --secondary-foreground: #10233F;
+  --accent: #B8863B;           /* brass / gold — Q4 accent */
+  --accent-foreground: #17181D;
+
+  --muted: #ECE7DC;
+  --muted-foreground: #5B5847;
+
+  --destructive: #A1332A;
+  --destructive-foreground: #F7F4EE;
+  --success: #2F6D4F;
+  --success-foreground: #F7F4EE;
+  --warning: #A6621A;
+  --warning-foreground: #F7F4EE;
+
+  --border: #DED6C2;
+  --input: #DED6C2;
+  --ring: #B8863B;
+
+  --sidebar: #0B182E;          /* darker navy than primary, for the admin/member shell */
+  --sidebar-foreground: #E8E2D2;
+  --sidebar-primary: #B8863B;
+  --sidebar-primary-foreground: #0B182E;
+  --sidebar-accent: #16264A;
+  --sidebar-accent-foreground: #E8E2D2;
+  --sidebar-border: #1B2D52;
+  --sidebar-ring: #B8863B;
+
+  --chart-1: #B8863B;
+  --chart-2: #10233F;
+  --chart-3: #2F6D4F;
+  --chart-4: #7A5C2E;
+  --chart-5: #5B5847;
+}
+
+.dark {
+  --background: #0B0E14;
+  --foreground: #EDE8DA;
+  --card: #12151D;
+  --card-foreground: #EDE8DA;
+  --popover: #12151D;
+  --popover-foreground: #EDE8DA;
+
+  --primary: #C7A15A;
+  --primary-foreground: #0B0E14;
+  --secondary: #1A2033;
+  --secondary-foreground: #EDE8DA;
+  --accent: #C7A15A;
+  --accent-foreground: #0B0E14;
+
+  --muted: #171B26;
+  --muted-foreground: #A6A08D;
+
+  --destructive: #C24A3F;
+  --destructive-foreground: #0B0E14;
+  --success: #3E9271;
+  --success-foreground: #0B0E14;
+  --warning: #C98A3B;
+  --warning-foreground: #0B0E14;
+
+  --border: #232838;
+  --input: #232838;
+  --ring: #C7A15A;
+
+  --sidebar: #070B14;
+  --sidebar-foreground: #EDE8DA;
+  --sidebar-primary: #C7A15A;
+  --sidebar-primary-foreground: #070B14;
+  --sidebar-accent: #12182B;
+  --sidebar-accent-foreground: #EDE8DA;
+  --sidebar-border: #1A2138;
+  --sidebar-ring: #C7A15A;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-sans: var(--font-geist-sans);
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+  --font-mono: var(--font-geist-mono);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  h1, h2, h3, .font-display {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+}

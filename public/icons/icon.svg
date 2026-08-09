@@ -1,0 +1,5 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="96" fill="#10233F"/>
+  <rect x="16" y="16" width="480" height="480" rx="80" fill="none" stroke="#B8863B" stroke-width="4" opacity="0.5"/>
+  <text x="256" y="318" font-family="Georgia, 'Times New Roman', serif" font-size="220" font-weight="700" fill="#EFE6CF" text-anchor="middle">Q4</text>
+</svg>
