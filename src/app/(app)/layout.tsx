@@ -16,9 +16,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, photo_url, role")
+    .select("full_name, photo_url, role, status")
     .eq("id", user.id)
     .single();
+
+  // First real login after accepting an invite — flip 'invited' to
+  // 'active' so the admin Users list reflects reality.
+  if (profile?.status === "invited") {
+    await supabase.from("profiles").update({ status: "active" }).eq("id", user.id);
+  }
 
   return (
     <AppShell
