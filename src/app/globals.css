@@ -166,3 +166,41 @@
     letter-spacing: -0.01em;
   }
 }
+
+/* Inline rendering of Word documents (mammoth.js output) */
+.doc-content {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--foreground);
+}
+.doc-content p {
+  margin: 0 0 1em;
+}
+.doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 1.5em 0 0.5em;
+  color: var(--foreground);
+}
+.doc-content h1 { font-size: 1.5rem; }
+.doc-content h2 { font-size: 1.25rem; }
+.doc-content h3 { font-size: 1.1rem; }
+.doc-content ul, .doc-content ol {
+  margin: 0 0 1em 1.5em;
+}
+.doc-content li { margin-bottom: 0.35em; }
+.doc-content strong { font-weight: 600; }
+.doc-content a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.doc-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 0.875rem;
+}
+.doc-content table td, .doc-content table th {
+  border: 1px solid var(--border);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+.doc-content img { max-width: 100%; height: auto; border-radius: 0.375rem; margin: 0.5em 0; }

@@ -63,6 +63,35 @@ export async function createMeeting(
   return { ok: true, message: "Meeting added." };
 }
 
+export async function updateMeeting(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const { supabase, isAdmin } = await requireAdmin();
+  if (!isAdmin) return { ok: false, message: "Admins only." };
+
+  const id = String(formData.get("id") || "");
+  if (!id) return { ok: false, message: "Missing meeting id." };
+
+  const title = String(formData.get("title") || "Forum Meeting").trim();
+  const startsAt = toTimestamp(formData.get("date"), formData.get("time"));
+  const endsAt = toTimestamp(formData.get("date"), formData.get("end_time"));
+  const location = String(formData.get("location") || "").trim() || null;
+  const notes = String(formData.get("notes") || "").trim() || null;
+
+  if (!startsAt) return { ok: false, message: "A valid date is required." };
+
+  const { error } = await supabase
+    .from("meetings")
+    .update({ title, starts_at: startsAt, ends_at: endsAt, location, notes })
+    .eq("id", id);
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/meetings");
+  return { ok: true, message: "Meeting updated." };
+}
+
 export async function deleteMeeting(id: string): Promise<ActionResult> {
   const { supabase, isAdmin } = await requireAdmin();
   if (!isAdmin) return { ok: false, message: "Admins only." };

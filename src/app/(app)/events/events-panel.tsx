@@ -11,6 +11,8 @@ import {
   HelpCircle,
   X,
   Sparkles,
+  PartyPopper,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -52,15 +55,41 @@ type EventRow = {
 };
 
 type Rsvp = { event_id: string; member_id: string; status: "attending" | "interested" | "not_attending" };
-type ProfileLite = { id: string; full_name: string | null };
+type ProfileLite = { id: string; full_name: string | null; photo_url: string | null };
 
 function formatRange(startsAt: string, endsAt: string | null) {
   const start = new Date(startsAt);
-  const dateStr = start.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   const startTime = start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  if (!endsAt) return `${dateStr} · ${startTime}`;
+  if (!endsAt) return startTime;
   const endTime = new Date(endsAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  return `${dateStr} · ${startTime}–${endTime}`;
+  return `${startTime}–${endTime}`;
+}
+
+function initials(name: string | null) {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+function DateBlock({ iso, accent }: { iso: string; accent: boolean }) {
+  const d = new Date(iso);
+  return (
+    <div
+      className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg shadow-sm ${
+        accent ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground"
+      }`}
+    >
+      <span className={`text-[10px] font-semibold uppercase tracking-wide ${accent ? "text-primary" : "text-accent"}`}>
+        {d.toLocaleDateString(undefined, { month: "short" })}
+      </span>
+      <span className="font-display text-xl font-semibold leading-none">{d.getDate()}</span>
+    </div>
+  );
 }
 
 function AddEventDialog() {
@@ -212,47 +241,54 @@ function RsvpControls({
 
 function EventCard({
   event,
-  attendeeNames,
+  attendees,
   myStatus,
   canManage,
 }: {
   event: EventRow;
-  attendeeNames: string[];
+  attendees: ProfileLite[];
   myStatus: Rsvp["status"] | null;
   canManage: boolean;
 }) {
   const [pending, startTransition] = useTransition();
+  const isEo = event.source === "eo";
 
   return (
-    <Card>
+    <Card className={`overflow-hidden transition-shadow hover:shadow-md ${isEo ? "border-l-4 border-l-accent" : ""}`}>
       <CardContent className="space-y-3 py-5">
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="mb-1 flex items-center gap-2">
-              <p className="font-medium">{event.title}</p>
-              {event.source === "eo" && (
-                <Badge variant="secondary" className="gap-1">
-                  <Sparkles className="h-3 w-3" /> EO
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">{formatRange(event.starts_at, event.ends_at)}</p>
-            {event.address && (
-              <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5" /> {event.address}
+          <div className="flex gap-4">
+            <DateBlock iso={event.starts_at} accent={isEo} />
+            <div>
+              <div className="mb-1 flex items-center gap-2">
+                <p className="font-medium">{event.title}</p>
+                {isEo && (
+                  <Badge variant="secondary" className="gap-1">
+                    <Sparkles className="h-3 w-3" /> EO
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {new Date(event.starts_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} ·{" "}
+                {formatRange(event.starts_at, event.ends_at)}
               </p>
-            )}
-            {event.link && (
-              <a
-                href={event.link}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 flex items-center gap-1 text-sm text-accent underline underline-offset-2"
-              >
-                <LinkIcon className="h-3.5 w-3.5" /> Event link
-              </a>
-            )}
-            {event.description && <p className="mt-2 text-sm">{event.description}</p>}
+              {event.address && (
+                <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5" /> {event.address}
+                </p>
+              )}
+              {event.link && (
+                <a
+                  href={event.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 flex items-center gap-1 text-sm text-accent underline underline-offset-2"
+                >
+                  <LinkIcon className="h-3.5 w-3.5" /> Event link
+                </a>
+              )}
+              {event.description && <p className="mt-2 text-sm text-muted-foreground">{event.description}</p>}
+            </div>
           </div>
           {canManage && (
             <Button
@@ -274,10 +310,22 @@ function EventCard({
 
         <RsvpControls eventId={event.id} myStatus={myStatus} />
 
-        {attendeeNames.length > 0 && (
-          <p className="text-xs text-muted-foreground">
-            Attending: {attendeeNames.join(", ")}
-          </p>
+        {attendees.length > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {attendees.slice(0, 8).map((p) => (
+                <Avatar key={p.id} className="h-6 w-6 border-2 border-card">
+                  {p.photo_url ? <AvatarImage src={p.photo_url} alt={p.full_name ?? ""} /> : null}
+                  <AvatarFallback className="bg-secondary text-[9px] text-secondary-foreground">
+                    {initials(p.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {attendees.length === 1 ? attendees[0].full_name ?? "1 attending" : `${attendees.length} attending`}
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -299,9 +347,9 @@ export function EventsPanel({
   currentUserId: string;
   isAdmin: boolean;
 }) {
-  const nameById = useMemo(() => {
-    const m = new Map<string, string>();
-    profiles.forEach((p) => m.set(p.id, p.full_name ?? "Member"));
+  const profileById = useMemo(() => {
+    const m = new Map<string, ProfileLite>();
+    profiles.forEach((p) => m.set(p.id, p));
     return m;
   }, [profiles]);
 
@@ -315,35 +363,51 @@ export function EventsPanel({
     return m;
   }, [rsvps]);
 
+  const [showPast, setShowPast] = useState(false);
+
   function renderEvent(event: EventRow) {
     const eventRsvps = rsvpsByEvent.get(event.id) ?? [];
     const myStatus = eventRsvps.find((r) => r.member_id === currentUserId)?.status ?? null;
-    const attendeeNames = eventRsvps
+    const attendees = eventRsvps
       .filter((r) => r.status === "attending")
-      .map((r) => nameById.get(r.member_id) ?? "Member");
+      .map((r) => profileById.get(r.member_id))
+      .filter((p): p is ProfileLite => !!p);
     const canManage = event.created_by === currentUserId || isAdmin;
 
     return (
       <EventCard
         key={event.id}
         event={event}
-        attendeeNames={attendeeNames}
+        attendees={attendees}
         myStatus={myStatus}
         canManage={canManage}
       />
     );
   }
 
+  const next = upcoming[0];
+
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Upcoming Events</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            EO events and member get-togethers — RSVP so everyone knows who&apos;s in.
-          </p>
+    <div className="flex flex-1 flex-col gap-6">
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary to-sidebar px-6 py-8 text-primary-foreground shadow-sm sm:px-8 sm:py-10">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-25"
+          style={{ backgroundImage: "radial-gradient(circle at 85% 20%, var(--accent) 0%, transparent 45%)" }}
+        />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-accent">
+              <PartyPopper className="h-3.5 w-3.5" /> Upcoming Events
+            </p>
+            <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+              {next ? next.title : "Nothing on the calendar"}
+            </h1>
+            <p className="mt-2 text-sm text-primary-foreground/70">
+              EO events and member get-togethers — RSVP so everyone knows who&apos;s in.
+            </p>
+          </div>
+          <AddEventDialog />
         </div>
-        <AddEventDialog />
       </div>
 
       <div className="space-y-3">
@@ -358,9 +422,16 @@ export function EventsPanel({
       </div>
 
       {past.length > 0 && (
-        <div className="mt-10">
-          <h2 className="mb-3 text-sm font-medium text-muted-foreground">Past events</h2>
-          <div className="space-y-2 opacity-70">{past.map(renderEvent)}</div>
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowPast((v) => !v)}
+            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${showPast ? "rotate-180" : ""}`} />
+            Past events ({past.length})
+          </button>
+          {showPast && <div className="mt-3 space-y-2 opacity-70">{past.map(renderEvent)}</div>}
         </div>
       )}
     </div>

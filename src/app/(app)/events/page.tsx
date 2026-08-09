@@ -14,7 +14,7 @@ export default async function EventsPage() {
       .select("id, source, title, description, starts_at, ends_at, address, link, created_by, notify_forum")
       .order("starts_at", { ascending: true }),
     supabase.from("event_rsvps").select("event_id, member_id, status"),
-    supabase.from("profiles").select("id, full_name"),
+    supabase.from("profiles").select("id, full_name, photo_url"),
     supabase.from("profiles").select("role").eq("id", user?.id ?? "").single(),
   ]);
 

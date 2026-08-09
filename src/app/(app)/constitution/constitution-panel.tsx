@@ -3,9 +3,10 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ScrollText, Upload, Download } from "lucide-react";
+import { ScrollText, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DocumentViewer } from "@/components/document-viewer";
 import { createClient } from "@/lib/supabase/client";
 import { setConstitutionFile } from "./actions";
 
@@ -22,8 +23,6 @@ export function ConstitutionPanel({
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [, startTransition] = useTransition();
-
-  const isPdf = url?.split("?")[0]?.toLowerCase().endsWith(".pdf");
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -76,25 +75,7 @@ export function ConstitutionPanel({
       </div>
 
       {url ? (
-        isPdf ? (
-          <Card className="overflow-hidden">
-            <iframe src={url} className="h-[75vh] w-full" title="Constitution" />
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-              <ScrollText className="h-10 w-10 text-accent" />
-              <p className="text-sm text-muted-foreground">
-                This file type can&apos;t be previewed here — download it to view.
-              </p>
-              <Button asChild>
-                <a href={url} target="_blank" rel="noreferrer">
-                  <Download className="mr-1.5 h-4 w-4" /> Download
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
-        )
+        <DocumentViewer url={url} title="Constitution" />
       ) : (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center gap-3 py-16 text-center">

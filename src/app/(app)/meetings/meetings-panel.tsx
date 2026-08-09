@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { CalendarClock, MapPin, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, MapPin, Plus, Trash2, Pencil, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import { createMeeting, deleteMeeting } from "./actions";
+import { createMeeting, updateMeeting, deleteMeeting } from "./actions";
 
 type Meeting = {
   id: string;
@@ -29,17 +29,37 @@ type Meeting = {
   notes: string | null;
 };
 
-function AddMeetingDialog() {
+function toLocalDateInput(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+function toLocalTimeInput(iso: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function MeetingDialog({
+  meeting,
+  trigger,
+}: {
+  meeting?: Meeting;
+  trigger: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const isEdit = !!meeting;
 
   function handleSubmit(formData: FormData) {
     setError(null);
+    if (meeting) formData.set("id", meeting.id);
     startTransition(async () => {
-      const res = await createMeeting({ ok: false }, formData);
+      const res = isEdit ? await updateMeeting({ ok: false }, formData) : await createMeeting({ ok: false }, formData);
       if (res.ok) {
-        toast.success(res.message ?? "Meeting added.");
+        toast.success(res.message ?? (isEdit ? "Meeting updated." : "Meeting added."));
         setOpen(false);
       } else {
         setError(res.message ?? "Something went wrong.");
@@ -55,43 +75,39 @@ function AddMeetingDialog() {
         if (!next) setError(null);
       }}
     >
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-1.5 h-4 w-4" /> Add meeting
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <form action={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Add a forum meeting</DialogTitle>
+            <DialogTitle>{isEdit ? "Edit meeting" : "Add a forum meeting"}</DialogTitle>
             <DialogDescription>Visible to every member.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" name="title" defaultValue="Forum Meeting" required />
+              <Input id="title" name="title" defaultValue={meeting?.title ?? "Forum Meeting"} required />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="date">Date</Label>
-                <Input id="date" name="date" type="date" required />
+                <Input id="date" name="date" type="date" required defaultValue={meeting ? toLocalDateInput(meeting.starts_at) : undefined} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="time">Start time</Label>
-                <Input id="time" name="time" type="time" />
+                <Input id="time" name="time" type="time" defaultValue={meeting ? toLocalTimeInput(meeting.starts_at) : undefined} />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="end_time">End time (optional)</Label>
-              <Input id="end_time" name="end_time" type="time" />
+              <Input id="end_time" name="end_time" type="time" defaultValue={meeting ? toLocalTimeInput(meeting.ends_at) : undefined} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
-              <Input id="location" name="location" placeholder="Address or venue" />
+              <Input id="location" name="location" placeholder="Address or venue" defaultValue={meeting?.location ?? undefined} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (optional)</Label>
-              <Textarea id="notes" name="notes" rows={3} />
+              <Textarea id="notes" name="notes" rows={3} defaultValue={meeting?.notes ?? undefined} />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
@@ -102,7 +118,7 @@ function AddMeetingDialog() {
               </Button>
             </DialogClose>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : "Add meeting"}
+              {pending ? "Saving…" : isEdit ? "Save changes" : "Add meeting"}
             </Button>
           </DialogFooter>
         </form>
@@ -111,19 +127,29 @@ function AddMeetingDialog() {
   );
 }
 
-function formatRange(startsAt: string, endsAt: string | null) {
+function formatTimeRange(startsAt: string, endsAt: string | null) {
   const start = new Date(startsAt);
-  const dateStr = start.toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
   const startTime = start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  if (!endsAt) return `${dateStr} · ${startTime}`;
+  if (!endsAt) return startTime;
   const end = new Date(endsAt);
   const endTime = end.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  return `${dateStr} · ${startTime}–${endTime}`;
+  return `${startTime}–${endTime}`;
+}
+
+function DateBlock({ iso }: { iso: string }) {
+  const d = new Date(iso);
+  return (
+    <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-accent">
+        {d.toLocaleDateString(undefined, { month: "short" })}
+      </span>
+      <span className="font-display text-xl font-semibold leading-none">{d.getDate()}</span>
+    </div>
+  );
+}
+
+function locationHref(location: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
 }
 
 export function MeetingsPanel({
@@ -137,17 +163,42 @@ export function MeetingsPanel({
 }) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const [showPast, setShowPast] = useState(false);
+  const next = upcoming[0];
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Upcoming Meetings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Forum meeting dates, times, and locations.
-          </p>
+    <div className="flex flex-1 flex-col gap-6">
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary to-sidebar px-6 py-8 text-primary-foreground shadow-sm sm:px-8 sm:py-10">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-25"
+          style={{ backgroundImage: "radial-gradient(circle at 85% 20%, var(--accent) 0%, transparent 45%)" }}
+        />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-accent">
+              <CalendarClock className="h-3.5 w-3.5" /> Upcoming Meetings
+            </p>
+            <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+              {next ? next.title : "No meetings scheduled"}
+            </h1>
+            {next && (
+              <p className="mt-2 text-sm text-primary-foreground/70">
+                {new Date(next.starts_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} ·{" "}
+                {formatTimeRange(next.starts_at, next.ends_at)}
+                {next.location && ` · ${next.location}`}
+              </p>
+            )}
+          </div>
+          {isAdmin && (
+            <MeetingDialog
+              trigger={
+                <Button variant="secondary" className="shrink-0">
+                  <Plus className="mr-1.5 h-4 w-4" /> Add meeting
+                </Button>
+              }
+            />
+          )}
         </div>
-        {isAdmin && <AddMeetingDialog />}
       </div>
 
       <div className="space-y-3">
@@ -159,40 +210,56 @@ export function MeetingsPanel({
           </Card>
         )}
         {upcoming.map((m) => (
-          <Card key={m.id}>
+          <Card key={m.id} className="transition-shadow hover:shadow-md">
             <CardContent className="flex items-start justify-between gap-4 py-5">
-              <div className="flex gap-3">
-                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-accent">
-                  <CalendarClock className="h-4 w-4" />
-                </div>
+              <div className="flex gap-4">
+                <DateBlock iso={m.starts_at} />
                 <div>
                   <p className="font-medium">{m.title}</p>
-                  <p className="text-sm text-muted-foreground">{formatRange(m.starts_at, m.ends_at)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(m.starts_at).toLocaleDateString(undefined, { weekday: "long" })} ·{" "}
+                    {formatTimeRange(m.starts_at, m.ends_at)}
+                  </p>
                   {m.location && (
-                    <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                    <a
+                      href={locationHref(m.location)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 flex items-center gap-1 text-sm text-accent underline-offset-2 hover:underline"
+                    >
                       <MapPin className="h-3.5 w-3.5" /> {m.location}
-                    </p>
+                    </a>
                   )}
-                  {m.notes && <p className="mt-2 text-sm">{m.notes}</p>}
+                  {m.notes && <p className="mt-2 text-sm text-muted-foreground">{m.notes}</p>}
                 </div>
               </div>
               {isAdmin && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Delete meeting"
-                  disabled={pendingId === m.id}
-                  onClick={() => {
-                    setPendingId(m.id);
-                    startTransition(async () => {
-                      const res = await deleteMeeting(m.id);
-                      setPendingId(null);
-                      if (!res.ok) toast.error(res.message ?? "Could not delete meeting.");
-                    });
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <MeetingDialog
+                    meeting={m}
+                    trigger={
+                      <Button variant="ghost" size="icon" aria-label="Edit meeting">
+                        <Pencil className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    }
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Delete meeting"
+                    disabled={pendingId === m.id}
+                    onClick={() => {
+                      setPendingId(m.id);
+                      startTransition(async () => {
+                        const res = await deleteMeeting(m.id);
+                        setPendingId(null);
+                        if (!res.ok) toast.error(res.message ?? "Could not delete meeting.");
+                      });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -200,38 +267,50 @@ export function MeetingsPanel({
       </div>
 
       {past.length > 0 && (
-        <div className="mt-10">
-          <h2 className="mb-3 text-sm font-medium text-muted-foreground">Past meetings</h2>
-          <div className="space-y-2 opacity-70">
-            {past.map((m) => (
-              <Card key={m.id}>
-                <CardContent className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="text-sm font-medium">{m.title}</p>
-                    <p className="text-xs text-muted-foreground">{formatRange(m.starts_at, m.ends_at)}</p>
-                  </div>
-                  {isAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Delete meeting"
-                      disabled={pendingId === m.id}
-                      onClick={() => {
-                        setPendingId(m.id);
-                        startTransition(async () => {
-                          const res = await deleteMeeting(m.id);
-                          setPendingId(null);
-                          if (!res.ok) toast.error(res.message ?? "Could not delete meeting.");
-                        });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowPast((v) => !v)}
+            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${showPast ? "rotate-180" : ""}`} />
+            Past meetings ({past.length})
+          </button>
+          {showPast && (
+            <div className="mt-3 space-y-2 opacity-70">
+              {past.map((m) => (
+                <Card key={m.id}>
+                  <CardContent className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="text-sm font-medium">{m.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(m.starts_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} ·{" "}
+                        {formatTimeRange(m.starts_at, m.ends_at)}
+                      </p>
+                    </div>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Delete meeting"
+                        disabled={pendingId === m.id}
+                        onClick={() => {
+                          setPendingId(m.id);
+                          startTransition(async () => {
+                            const res = await deleteMeeting(m.id);
+                            setPendingId(null);
+                            if (!res.ok) toast.error(res.message ?? "Could not delete meeting.");
+                          });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

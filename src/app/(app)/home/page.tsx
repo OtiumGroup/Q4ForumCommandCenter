@@ -84,19 +84,40 @@ export default async function HomePage() {
     .sort((a, b) => (a.starts_at > b.starts_at ? 1 : -1))
     .slice(0, 6);
 
+  const nextItem = nextUp[0];
+
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight">
-          {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Here&apos;s what&apos;s happening in the forum.
-        </p>
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary to-sidebar px-6 py-8 text-primary-foreground shadow-sm sm:px-8 sm:py-10">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-25"
+          style={{ backgroundImage: "radial-gradient(circle at 85% 20%, var(--accent) 0%, transparent 45%)" }}
+        />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent">EO Fort Worth · Q4 Forum</p>
+            <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+              {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
+            </h1>
+            <p className="mt-2 text-sm text-primary-foreground/70">
+              Here&apos;s what&apos;s happening in the forum.
+            </p>
+          </div>
+          {nextItem && (
+            <div className="rounded-lg border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-primary-foreground/60">Next up</p>
+              <p className="mt-0.5 flex items-center gap-1.5 text-sm font-medium">
+                {nextItem.type === "birthday" && <Cake className="h-3.5 w-3.5 text-accent" />}
+                {nextItem.title}
+              </p>
+              <p className="text-xs text-primary-foreground/70">{formatDate(nextItem.starts_at)}</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 transition-shadow hover:shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Bell className="h-4 w-4 text-accent" /> Notices
@@ -127,7 +148,7 @@ export default async function HomePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="transition-shadow hover:shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <CalendarDays className="h-4 w-4 text-accent" /> Coming up

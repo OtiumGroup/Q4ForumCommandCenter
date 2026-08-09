@@ -6,11 +6,13 @@ import {
   Upload,
   Search,
   FileText,
-  Download,
   Trash2,
   Link as LinkIcon,
   Plus,
   FolderPlus,
+  ChevronRight,
+  ChevronDown,
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +37,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import { DocumentViewer } from "@/components/document-viewer";
 import { createClient } from "@/lib/supabase/client";
 import {
   recordDocument,
@@ -313,9 +316,9 @@ export function DocumentsPanel({
   isAdmin: boolean;
 }) {
   const [query, setQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(documents[0]?.id ?? null);
 
   const categoryName = useMemo(() => {
     const m = new Map<string, string>();
@@ -323,21 +326,41 @@ export function DocumentsPanel({
     return m;
   }, [categories]);
 
-  const filteredDocs = documents.filter((d) => {
-    const matchesCategory = categoryFilter === "all" || d.category_id === categoryFilter;
-    const q = query.trim().toLowerCase();
-    const matchesQuery =
-      !q || d.title.toLowerCase().includes(q) || (d.description ?? "").toLowerCase().includes(q);
-    return matchesCategory && matchesQuery;
+  const q = query.trim().toLowerCase();
+  const filteredDocs = q
+    ? documents.filter((d) => d.title.toLowerCase().includes(q) || (d.description ?? "").toLowerCase().includes(q))
+    : documents;
+
+  const grouped = useMemo(() => {
+    const byCategory = categories.map((cat) => ({ cat, items: filteredDocs.filter((d) => d.category_id === cat.id) }));
+    const uncategorized = filteredDocs.filter((d) => !d.category_id);
+    return { byCategory, uncategorized };
+  }, [categories, filteredDocs]);
+
+  const selected = documents.find((d) => d.id === selectedId) ?? null;
+
+  const [openCats, setOpenCats] = useState<Set<string>>(() => {
+    const initial = documents[0]?.category_id;
+    return new Set(initial ? [initial] : []);
   });
+  const toggleCat = (id: string) =>
+    setOpenCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const effectiveOpenCats = q
+    ? new Set(grouped.byCategory.filter((g) => g.items.length > 0).map((g) => g.cat.id).concat("uncategorized"))
+    : openCats;
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">Documents</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            A shared, searchable library for the forum.
+            A shared, searchable library for the forum — pick a document to read it right here.
           </p>
         </div>
       </div>
@@ -348,91 +371,139 @@ export function DocumentsPanel({
           <TabsTrigger value="links">Helpful Links</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="library" className="mt-4 space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative max-w-xs flex-1">
-              <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search documents…"
-                className="pl-8"
-              />
-            </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All categories</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="ml-auto flex items-center gap-2">
-              {isAdmin && <AddCategoryDialog />}
-              <UploadDialog categories={categories} userId={currentUserId} />
-            </div>
-          </div>
+        <TabsContent value="library" className="mt-4">
+          {documents.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="py-16 text-center text-sm text-muted-foreground">
+                No documents uploaded yet.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid flex-1 gap-4 lg:grid-cols-[240px_1fr]">
+              <div className="flex flex-col gap-3">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="pl-8" />
+                </div>
+                <div className="flex items-center gap-2">
+                  {isAdmin && <AddCategoryDialog />}
+                  <UploadDialog categories={categories} userId={currentUserId} />
+                </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredDocs.map((doc) => (
-              <Card key={doc.id}>
-                <CardContent className="flex items-start justify-between gap-3 py-4">
-                  <div className="flex gap-3">
-                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-accent">
-                      <FileText className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{doc.title}</p>
-                      {doc.category_id && categoryName.get(doc.category_id) && (
-                        <p className="text-xs text-muted-foreground">{categoryName.get(doc.category_id)}</p>
-                      )}
-                      {doc.description && <p className="mt-1 text-sm text-muted-foreground">{doc.description}</p>}
-                      {doc.url && (
-                        <a
-                          href={doc.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-2 inline-flex items-center gap-1 text-sm text-accent underline underline-offset-2"
-                        >
-                          <Download className="h-3.5 w-3.5" /> Download
-                        </a>
-                      )}
-                    </div>
+                <div className="max-h-[75vh] overflow-y-auto rounded-lg border border-border bg-card">
+                  <div className="flex items-center gap-1.5 border-b border-border bg-primary/5 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-primary">
+                    <FolderOpen className="h-3.5 w-3.5 text-accent" /> Documents
                   </div>
-                  {(doc.uploaded_by === currentUserId || isAdmin) && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Delete document"
-                      disabled={pendingId === doc.id}
-                      onClick={() => {
-                        setPendingId(doc.id);
-                        startTransition(async () => {
-                          const res = await deleteDocument(doc.id, doc.file_path);
-                          setPendingId(null);
-                          if (!res.ok) toast.error(res.message ?? "Could not delete document.");
-                        });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+
+                  {grouped.byCategory.map(({ cat, items }) => {
+                    if (items.length === 0) return null;
+                    const isOpen = effectiveOpenCats.has(cat.id);
+                    return (
+                      <div key={cat.id} className="border-b border-border last:border-0">
+                        <button
+                          type="button"
+                          onClick={() => toggleCat(cat.id)}
+                          className="flex w-full items-center justify-between gap-1.5 bg-secondary/40 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-secondary/60"
+                        >
+                          <span className="truncate">{cat.name}</span>
+                          <span className="flex items-center gap-1.5 shrink-0">
+                            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium normal-case text-muted-foreground">
+                              {items.length}
+                            </span>
+                            {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                          </span>
+                        </button>
+                        {isOpen && (
+                          <ul>
+                            {items.map((doc) => (
+                              <li key={doc.id}>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedId(doc.id)}
+                                  className={`flex w-full items-center justify-between gap-2 py-2 pl-7 pr-3 text-left text-sm transition-colors hover:bg-secondary/60 ${
+                                    selectedId === doc.id ? "bg-accent/10 font-medium text-accent" : "text-foreground"
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-2 truncate">
+                                    <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                    <span className="truncate">{doc.title}</span>
+                                  </span>
+                                  {(doc.uploaded_by === currentUserId || isAdmin) && (
+                                    <Trash2
+                                      role="button"
+                                      aria-label="Delete document"
+                                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground hover:text-destructive"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPendingId(doc.id);
+                                        startTransition(async () => {
+                                          const res = await deleteDocument(doc.id, doc.file_path);
+                                          setPendingId(null);
+                                          if (!res.ok) toast.error(res.message ?? "Could not delete document.");
+                                          else if (selectedId === doc.id) setSelectedId(null);
+                                        });
+                                      }}
+                                      style={{ opacity: pendingId === doc.id ? 0.4 : 1 }}
+                                    />
+                                  )}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {grouped.uncategorized.length > 0 && (
+                    <div className="border-b border-border last:border-0">
+                      <button
+                        type="button"
+                        onClick={() => toggleCat("uncategorized")}
+                        className="flex w-full items-center justify-between gap-1.5 bg-secondary/40 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-secondary/60"
+                      >
+                        <span>Uncategorized</span>
+                        {effectiveOpenCats.has("uncategorized") ? (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                      {effectiveOpenCats.has("uncategorized") && (
+                        <ul>
+                          {grouped.uncategorized.map((doc) => (
+                            <li key={doc.id}>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedId(doc.id)}
+                                className={`flex w-full items-center gap-2 py-2 pl-7 pr-3 text-left text-sm transition-colors hover:bg-secondary/60 ${
+                                  selectedId === doc.id ? "bg-accent/10 font-medium text-accent" : "text-foreground"
+                                }`}
+                              >
+                                <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                <span className="truncate">{doc.title}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   )}
-                </CardContent>
-              </Card>
-            ))}
-            {filteredDocs.length === 0 && (
-              <Card className="border-dashed sm:col-span-2 lg:col-span-3">
-                <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                  {documents.length === 0 ? "No documents uploaded yet." : "No documents match your search."}
-                </CardContent>
-              </Card>
-            )}
-          </div>
+
+                  {filteredDocs.length === 0 && (
+                    <p className="px-3 py-6 text-center text-sm text-muted-foreground">No documents match &quot;{query}&quot;.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {selected?.description && (
+                  <p className="rounded-md bg-secondary/40 px-3 py-2 text-sm text-muted-foreground">{selected.description}</p>
+                )}
+                <DocumentViewer url={selected?.url ?? null} title={selected?.title ?? ""} fileType={selected?.file_type} className="lg:min-h-[70vh]" />
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="links" className="mt-4 space-y-4">

@@ -73,16 +73,19 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
         )}
       </div>
 
-      <Card className="mb-6">
-        <CardContent className="flex flex-col items-center gap-4 py-8 text-center sm:flex-row sm:text-left">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={profile.photo_url ?? undefined} alt={profile.full_name ?? ""} />
-            <AvatarFallback className="bg-secondary text-2xl text-secondary-foreground">
+      <Card className="mb-6 overflow-hidden py-0">
+        <div className="relative h-28 bg-gradient-to-r from-primary via-primary to-sidebar sm:h-32">
+          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, var(--accent) 0%, transparent 55%)" }} />
+        </div>
+        <CardContent className="flex flex-col items-center gap-4 px-6 pb-8 pt-0 text-center sm:flex-row sm:items-end sm:text-left">
+          <Avatar className="-mt-14 h-28 w-28 border-4 border-card shadow-md sm:-mt-16 sm:h-32 sm:w-32">
+            <AvatarImage src={profile.photo_url ?? undefined} alt={profile.full_name ?? ""} className="object-cover" />
+            <AvatarFallback className="bg-secondary text-3xl text-secondary-foreground">
               {initials(profile.full_name)}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <h1 className="font-display text-2xl font-semibold tracking-tight">
+          <div className="pb-1">
+            <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
               {profile.full_name ?? "Member"}
             </h1>
             {businesses[0] && (

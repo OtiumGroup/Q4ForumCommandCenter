@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Camera, Plus, Trash2 } from "lucide-react";
+import { Camera, Plus, Trash2, Users, Heart, Briefcase, Globe, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,37 +108,44 @@ export function BioEditForm({ profile, userId }: { profile: Profile; userId: str
       <div className="mb-6">
         <h1 className="font-display text-2xl font-semibold tracking-tight">My Bio</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Name, birthday, and photo are required — everything else is up to you.
+          Name, birthday, and photo are required — everything else is up to you. This is what the rest of the forum sees.
         </p>
       </div>
 
       <form action={handleSubmit} className="space-y-6">
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 py-6 sm:flex-row">
-            <div className="relative">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={photoUrl ?? undefined} alt="" />
-                <AvatarFallback className="bg-secondary text-xl text-secondary-foreground">
+        <Card className="overflow-hidden py-0">
+          <div className="flex flex-col gap-6 bg-gradient-to-br from-secondary/60 to-transparent p-6 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="group relative shrink-0 self-center"
+              aria-label="Change photo"
+            >
+              <Avatar className="h-28 w-28 border-4 border-card shadow-md transition-opacity group-hover:opacity-80">
+                <AvatarImage src={photoUrl ?? undefined} alt="" className="object-cover" />
+                <AvatarFallback className="bg-primary text-2xl text-primary-foreground">
                   {initials(profile?.full_name ?? null)}
                 </AvatarFallback>
               </Avatar>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow"
-                aria-label="Change photo"
-              >
-                <Camera className="h-3.5 w-3.5" />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-            </div>
+              <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 text-transparent transition-colors group-hover:bg-black/40 group-hover:text-white">
+                <Camera className="h-5 w-5" />
+              </span>
+              <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground shadow ring-2 ring-card">
+                {uploading ? (
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <ImagePlus className="h-4 w-4" />
+                )}
+              </span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
             <div className="grid w-full flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="full_name">Full name *</Label>
@@ -148,13 +155,18 @@ export function BioEditForm({ profile, userId }: { profile: Profile; userId: str
                 <Label htmlFor="birthday">Birthday *</Label>
                 <Input id="birthday" name="birthday" type="date" defaultValue={profile?.birthday ?? ""} required />
               </div>
+              <p className="text-xs text-muted-foreground sm:col-span-2">
+                Click your photo to upload one — a clear headshot works best.
+              </p>
             </div>
-          </CardContent>
+          </div>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Family</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Users className="h-4 w-4 text-accent" /> Family
+            </CardTitle>
             <CardDescription>Optional.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -210,7 +222,7 @@ export function BioEditForm({ profile, userId }: { profile: Profile; userId: str
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Personal</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base"><Heart className="h-4 w-4 text-accent" /> Personal</CardTitle>
             <CardDescription>Optional.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -247,7 +259,7 @@ export function BioEditForm({ profile, userId }: { profile: Profile; userId: str
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Business</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base"><Briefcase className="h-4 w-4 text-accent" /> Business</CardTitle>
             <CardDescription>Add as many as you like.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -325,7 +337,7 @@ export function BioEditForm({ profile, userId }: { profile: Profile; userId: str
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">More</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base"><Globe className="h-4 w-4 text-accent" /> More</CardTitle>
             <CardDescription>Optional.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

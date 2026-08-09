@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Upload, Search, FileText, Download, Trash2, FolderPlus, LibraryBig } from "lucide-react";
+import { Upload, Search, FileText, Trash2, FolderPlus, LibraryBig, ChevronRight, ChevronDown, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import { DocumentViewer } from "@/components/document-viewer";
 import { createClient } from "@/lib/supabase/client";
 import { recordEoResource, deleteEoResource, createEoCategory } from "./actions";
 
@@ -64,7 +65,7 @@ function UploadDialog({ categories }: { categories: Category[] }) {
         if (uploadError) throw uploadError;
 
         formData.set("file_path", path);
-        formData.set("file_type", file.type || file.name.split(".").pop() || "");
+        formData.set("file_type", file.name.split(".").pop() || file.type || "");
 
         const res = await recordEoResource({ ok: false }, formData);
         if (!res.ok) throw new Error(res.message);
@@ -84,8 +85,8 @@ function UploadDialog({ categories }: { categories: Category[] }) {
   return (
     <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setError(null); }}>
       <DialogTrigger asChild>
-        <Button>
-          <Upload className="mr-1.5 h-4 w-4" /> Upload resource
+        <Button size="sm">
+          <Upload className="mr-1.5 h-4 w-4" /> Upload
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -196,19 +197,51 @@ export function ResourcesPanel({
   const [query, setQuery] = useState("");
   const [, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(resources[0]?.id ?? null);
 
   const q = query.trim().toLowerCase();
   const filtered = q ? resources.filter((r) => r.title.toLowerCase().includes(q)) : resources;
 
-  const uncategorized = filtered.filter((r) => !r.category_id);
+  const grouped = useMemo(() => {
+    const byCategory = categories.map((cat) => ({
+      cat,
+      items: filtered.filter((r) => r.category_id === cat.id),
+    }));
+    const uncategorized = filtered.filter((r) => !r.category_id);
+    return { byCategory, uncategorized };
+  }, [categories, filtered]);
+
+  const selected = resources.find((r) => r.id === selectedId) ?? null;
+
+  // Sub-categories under the "EO Resources" root are collapsible — start with
+  // just the section holding the selected doc open, so the tree stays compact
+  // and the viewer gets most of the room.
+  const [openCats, setOpenCats] = useState<Set<string>>(() => {
+    const initial = resources[0]?.category_id;
+    return new Set(initial ? [initial] : []);
+  });
+  const toggleCat = (id: string) =>
+    setOpenCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  // While searching, treat every category with a match as open so results are
+  // visible — derived from state rather than an effect, so clearing the search
+  // restores whatever the member had manually expanded.
+  const effectiveOpenCats = q
+    ? new Set(grouped.byCategory.filter((g) => g.items.length > 0).map((g) => g.cat.id).concat("uncategorized"))
+    : openCats;
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">EO Resources</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            The forum&apos;s full Moderator Resources library, organized to browse or download.
+            The forum&apos;s full Moderator Resources library — pick a document to read it right here.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -217,119 +250,134 @@ export function ResourcesPanel({
         </div>
       </div>
 
-      <div className="relative mb-6 max-w-sm">
-        <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search resources…" className="pl-8" />
-      </div>
-
-      <div className="space-y-8">
-        {categories.map((cat) => {
-          const items = filtered.filter((r) => r.category_id === cat.id);
-          if (items.length === 0) return null;
-          return (
-            <div key={cat.id}>
-              <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold">
-                <LibraryBig className="h-4 w-4 text-accent" /> {cat.name}
-                <span className="text-sm font-normal text-muted-foreground">({items.length})</span>
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {items.map((r) => (
-                  <Card key={r.id}>
-                    <CardContent className="flex items-start justify-between gap-3 py-4">
-                      <div className="flex gap-3">
-                        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-accent">
-                          <FileText className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{r.title}</p>
-                          {r.url && (
-                            <a
-                              href={r.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="mt-2 inline-flex items-center gap-1 text-sm text-accent underline underline-offset-2"
-                            >
-                              <Download className="h-3.5 w-3.5" /> Download
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Delete resource"
-                          disabled={pendingId === r.id}
-                          onClick={() => {
-                            setPendingId(r.id);
-                            startTransition(async () => {
-                              const res = await deleteEoResource(r.id, r.file_path);
-                              setPendingId(null);
-                              if (!res.ok) toast.error(res.message ?? "Could not delete resource.");
-                            });
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+      {resources.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="py-16 text-center text-sm text-muted-foreground">
+            {isAdmin
+              ? "Nothing uploaded yet — start adding the moderator resource library."
+              : "The resource library is being built out — check back soon."}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid flex-1 gap-4 lg:grid-cols-[240px_1fr]">
+          <div className="flex flex-col gap-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="pl-8" />
             </div>
-          );
-        })}
 
-        {uncategorized.length > 0 && (
-          <div>
-            <h2 className="mb-3 font-display text-lg font-semibold">Uncategorized</h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {uncategorized.map((r) => (
-                <Card key={r.id}>
-                  <CardContent className="flex items-start justify-between gap-3 py-4">
-                    <div className="flex gap-3">
-                      <FileText className="mt-0.5 h-4 w-4 text-accent" />
-                      <div>
-                        <p className="font-medium">{r.title}</p>
-                        {r.url && (
-                          <a href={r.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm text-accent underline underline-offset-2">
-                            <Download className="h-3.5 w-3.5" /> Download
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Delete resource"
-                        onClick={() =>
-                          startTransition(async () => {
-                            const res = await deleteEoResource(r.id, r.file_path);
-                            if (!res.ok) toast.error(res.message ?? "Could not delete resource.");
-                          })
-                        }
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+            <div className="max-h-[75vh] overflow-y-auto rounded-lg border border-border bg-card">
+              <div className="flex items-center gap-1.5 border-b border-border bg-primary/5 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-primary">
+                <BookOpen className="h-3.5 w-3.5 text-accent" /> EO Resources
+              </div>
+
+              {grouped.byCategory.map(({ cat, items }) => {
+                if (items.length === 0) return null;
+                const isOpen = effectiveOpenCats.has(cat.id);
+                return (
+                  <div key={cat.id} className="border-b border-border last:border-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleCat(cat.id)}
+                      className="flex w-full items-center justify-between gap-1.5 bg-secondary/40 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-secondary/60"
+                    >
+                      <span className="flex items-center gap-1.5 truncate">
+                        <LibraryBig className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{cat.name}</span>
+                      </span>
+                      <span className="flex items-center gap-1.5 shrink-0">
+                        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium normal-case text-muted-foreground">
+                          {items.length}
+                        </span>
+                        {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <ul>
+                        {items.map((r) => (
+                          <li key={r.id}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedId(r.id)}
+                              className={`flex w-full items-center justify-between gap-2 py-2 pl-7 pr-3 text-left text-sm transition-colors hover:bg-secondary/60 ${
+                                selectedId === r.id ? "bg-accent/10 font-medium text-accent" : "text-foreground"
+                              }`}
+                            >
+                              <span className="flex items-center gap-2 truncate">
+                                <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                <span className="truncate">{r.title}</span>
+                              </span>
+                              {isAdmin && (
+                                <Trash2
+                                  role="button"
+                                  aria-label="Delete resource"
+                                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground hover:text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPendingId(r.id);
+                                    startTransition(async () => {
+                                      const res = await deleteEoResource(r.id, r.file_path);
+                                      setPendingId(null);
+                                      if (!res.ok) toast.error(res.message ?? "Could not delete resource.");
+                                      else if (selectedId === r.id) setSelectedId(null);
+                                    });
+                                  }}
+                                  style={{ opacity: pendingId === r.id ? 0.4 : 1 }}
+                                />
+                              )}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                );
+              })}
+
+              {grouped.uncategorized.length > 0 && (
+                <div className="border-b border-border last:border-0">
+                  <button
+                    type="button"
+                    onClick={() => toggleCat("uncategorized")}
+                    className="flex w-full items-center justify-between gap-1.5 bg-secondary/40 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-secondary/60"
+                  >
+                    <span>Uncategorized</span>
+                    {effectiveOpenCats.has("uncategorized") ? (
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                  {effectiveOpenCats.has("uncategorized") && (
+                    <ul>
+                      {grouped.uncategorized.map((r) => (
+                        <li key={r.id}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedId(r.id)}
+                            className={`flex w-full items-center gap-2 py-2 pl-7 pr-3 text-left text-sm transition-colors hover:bg-secondary/60 ${
+                              selectedId === r.id ? "bg-accent/10 font-medium text-accent" : "text-foreground"
+                            }`}
+                          >
+                            <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <span className="truncate">{r.title}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {filtered.length === 0 && (
+                <p className="px-3 py-6 text-center text-sm text-muted-foreground">No resources match &quot;{query}&quot;.</p>
+              )}
             </div>
           </div>
-        )}
 
-        {resources.length === 0 && (
-          <Card className="border-dashed">
-            <CardContent className="py-16 text-center text-sm text-muted-foreground">
-              {isAdmin
-                ? "Nothing uploaded yet — start adding the moderator resource library."
-                : "The resource library is being built out — check back soon."}
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          <DocumentViewer url={selected?.url ?? null} title={selected?.title ?? ""} fileType={selected?.file_type} className="lg:min-h-[80vh]" />
+        </div>
+      )}
     </div>
   );
 }
