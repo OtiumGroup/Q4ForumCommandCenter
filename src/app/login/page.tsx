@@ -24,10 +24,8 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
    When the logo image is added to /public, swap this block for an <img>. */
 function BrandMark() {
   return (
-    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/40 bg-card font-display text-3xl font-semibold shadow-sm">
-      <span className="text-foreground">Q</span>
-      <span className="text-accent">4</span>
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/brand/q4-mark.png" alt="EO Q4 Forum" className="mx-auto h-24 w-24 rounded-2xl shadow-sm" />
   );
 }
 

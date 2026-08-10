@@ -26,9 +26,8 @@ function initials(name: string | null) {
 function BrandMark() {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-gradient-to-br from-primary to-accent font-display text-sm font-semibold text-primary-foreground shadow-sm ring-1 ring-black/5">
-        Q4
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/q4-mark.png" alt="Q4" className="h-9 w-9 rounded-[10px] shadow-sm" />
       <div className="leading-tight">
         <p className="font-display text-sm font-semibold tracking-tight">EO Q4 Forum</p>
         <p className="text-[11px] text-sidebar-foreground/60">Command Center</p>
