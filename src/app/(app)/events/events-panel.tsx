@@ -85,7 +85,7 @@ function DateBlock({ iso, accent }: { iso: string; accent: boolean }) {
         accent ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground"
       }`}
     >
-      <span className={`text-[10px] font-semibold uppercase tracking-wide ${accent ? "text-primary" : "text-accent"}`}>
+      <span className={`text-[11px] font-semibold uppercase tracking-wide ${accent ? "text-accent-foreground/90" : "text-accent"}`}>
         {d.toLocaleDateString(undefined, { month: "short" })}
       </span>
       <span className="font-display text-xl font-semibold leading-none">{d.getDate()}</span>
