@@ -31,38 +31,64 @@ export function DocumentViewer({
   const isWord = WORD_EXTS.has(ext) && ext === "docx"; // .doc (legacy binary) can't be parsed client-side
 
   const [html, setHtml] = useState<string | null>(null);
+  const [pdfPages, setPdfPages] = useState<string[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const requestedUrl = useRef<string | null>(null);
 
   useEffect(() => {
-    requestedUrl.current = null;
-
-    if (!url || !isWord) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting preview state when the selected document changes
+    if (!url || (!isWord && !isPdf)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset preview state when the selection changes
       setHtml(null);
+      setPdfPages([]);
       setStatus("idle");
+      requestedUrl.current = null;
       return;
     }
 
     let cancelled = false;
     requestedUrl.current = url;
+    setStatus("loading");
+    setHtml(null);
+    setPdfPages([]);
 
     (async () => {
-      setStatus("loading");
-      setHtml(null);
       try {
-        const mammoth = await import("mammoth/mammoth.browser");
-        const res = await fetch(url);
-        const arrayBuffer = await res.arrayBuffer();
-        const result = await mammoth.convertToHtml({ arrayBuffer });
-        // Sanitize before rendering: mammoth does not guard against XSS, and
-        // members can upload .docx files, so a crafted document could otherwise
-        // inject script into another member's session.
-        const DOMPurify = (await import("dompurify")).default;
-        const clean = DOMPurify.sanitize(result.value, { USE_PROFILES: { html: true } });
-        if (!cancelled && requestedUrl.current === url) {
-          setHtml(clean);
-          setStatus("ready");
+        if (isWord) {
+          const mammoth = await import("mammoth/mammoth.browser");
+          const res = await fetch(url);
+          const arrayBuffer = await res.arrayBuffer();
+          const result = await mammoth.convertToHtml({ arrayBuffer });
+          // Sanitize: mammoth doesn't guard against XSS and members can upload docx.
+          const DOMPurify = (await import("dompurify")).default;
+          const clean = DOMPurify.sanitize(result.value, { USE_PROFILES: { html: true } });
+          if (!cancelled && requestedUrl.current === url) {
+            setHtml(clean);
+            setStatus("ready");
+          }
+        } else if (isPdf) {
+          // Render PDF pages to images with PDF.js. Unlike an <iframe>, this
+          // renders legibly and scrolls on mobile Safari.
+          const pdfjs = await import("pdfjs-dist");
+          pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+          const doc = await pdfjs.getDocument({ url }).promise;
+          const pages: string[] = [];
+          const scale = 2; // crisp on high-DPI screens; CSS scales to fit width
+          for (let i = 1; i <= doc.numPages; i++) {
+            if (cancelled || requestedUrl.current !== url) return;
+            const page = await doc.getPage(i);
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement("canvas");
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) continue;
+            await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+            pages.push(canvas.toDataURL("image/png"));
+          }
+          if (!cancelled && requestedUrl.current === url) {
+            setPdfPages(pages);
+            setStatus("ready");
+          }
         }
       } catch {
         if (!cancelled) setStatus("error");
@@ -72,7 +98,7 @@ export function DocumentViewer({
     return () => {
       cancelled = true;
     };
-  }, [url, isWord]);
+  }, [url, isWord, isPdf]);
 
   if (!url) {
     return (
@@ -96,33 +122,33 @@ export function DocumentViewer({
 
       <div className="min-h-0 flex-1 overflow-auto">
         {isPdf && (
-          <>
-            <iframe src={url} className="hidden h-full min-h-[70vh] w-full lg:block" title={title} />
-            <div className="flex min-h-[55vh] flex-col items-center justify-center gap-4 p-8 text-center lg:hidden">
-              <FileText className="h-12 w-12 text-accent" />
-              <div>
-                <p className="font-medium text-foreground">{title || "Document"}</p>
-                <p className="mt-1 text-sm text-muted-foreground">Open the document to read, zoom, and scroll — or download it to keep.</p>
+          <div className="bg-muted/30 p-2 sm:p-4">
+            {status === "loading" && (
+              <div className="flex min-h-[50vh] flex-col items-center justify-center gap-2 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <p className="text-sm">Loading document…</p>
               </div>
-              <div className="flex flex-col gap-2">
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-                >
-                  <FileText className="h-4 w-4" /> Open document
-                </a>
-                <a
-                  href={url}
-                  download
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary/60"
-                >
-                  <Download className="h-4 w-4" /> Download
-                </a>
+            )}
+            {status === "error" && (
+              <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 p-6 text-center">
+                <FileWarning className="h-8 w-8 text-muted-foreground" />
+                <p className="max-w-xs text-sm text-muted-foreground">Couldn&apos;t render a preview here.</p>
+                <div className="flex flex-col gap-2">
+                  <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+                    <FileText className="h-4 w-4" /> Open document
+                  </a>
+                  <a href={url} download className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary/60">
+                    <Download className="h-4 w-4" /> Download
+                  </a>
+                </div>
               </div>
-            </div>
-          </>
+            )}
+            {status === "ready" &&
+              pdfPages.map((src, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={src} alt={`Page ${i + 1}`} className="mx-auto mb-3 w-full max-w-3xl rounded-sm bg-white shadow-sm last:mb-0" />
+              ))}
+          </div>
         )}
 
         {isImage && (
