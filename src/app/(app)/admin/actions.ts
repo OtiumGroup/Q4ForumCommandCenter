@@ -181,7 +181,7 @@ export async function sendWelcome(email: string): Promise<ActionResult> {
   if (!target) return { ok: false, message: "No email on file for this member." };
   const origin = await resetOrigin();
   const { error } = await supabase.auth.resetPasswordForEmail(target, {
-    redirectTo: origin ? `${origin}/reset` : undefined,
+    redirectTo: origin ? `${origin}/auth/confirm?next=/reset` : undefined,
   });
   if (error) return { ok: false, message: error.message };
   return { ok: true, message: `Welcome email sent to ${target}.` };
@@ -191,7 +191,7 @@ export async function sendWelcomeToAll(): Promise<ActionResult> {
   const { supabase, isAdmin } = await requireAdmin();
   if (!isAdmin) return { ok: false, message: "Admins only." };
   const origin = await resetOrigin();
-  const redirectTo = origin ? `${origin}/reset` : undefined;
+  const redirectTo = origin ? `${origin}/auth/confirm?next=/reset` : undefined;
 
   const { data: rows } = await supabase.from("profiles").select("email").eq("status", "active");
   const emails = (rows ?? []).map((r) => r.email).filter((e): e is string => Boolean(e));

@@ -13,7 +13,7 @@ export async function sendReset(_prev: ForgotState, formData: FormData): Promise
   const h = await headers();
   const host = h.get("host");
   const origin = h.get("origin") ?? (host ? `https://${host}` : "");
-  await supabase.auth.resetPasswordForEmail(email, { redirectTo: origin ? `${origin}/reset` : undefined });
+  await supabase.auth.resetPasswordForEmail(email, { redirectTo: origin ? `${origin}/auth/confirm?next=/reset` : undefined });
 
   // Always report success — don't reveal whether an account exists.
   return { status: "sent" };
