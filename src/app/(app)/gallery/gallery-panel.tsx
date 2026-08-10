@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ImagePlus, Trash2, Images, Download, X } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -93,16 +94,12 @@ export function GalleryPanel({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Photo Gallery</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Share the fun stuff — trips, wins, meetups, the good times.</p>
-        </div>
+      <PageHeader eyebrow="EO Fort Worth · Q4 Forum" title="Photo Gallery" description="Share the fun stuff — trips, wins, meetups, the good times.">
         <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleUpload} />
-        <Button onClick={() => fileRef.current?.click()} disabled={uploading}>
+        <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={uploading}>
           <ImagePlus className="mr-1.5 h-4 w-4" /> {uploading ? "Uploading…" : "Add photos"}
         </Button>
-      </div>
+      </PageHeader>
 
       {photos.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">

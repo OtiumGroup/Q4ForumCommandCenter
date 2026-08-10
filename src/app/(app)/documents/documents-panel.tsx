@@ -15,6 +15,7 @@ import {
   FolderOpen,
   ArrowLeft,
 } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -359,14 +360,7 @@ export function DocumentsPanel({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Documents</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            A shared, searchable library for the forum — pick a document to read it right here.
-          </p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Library" title="Documents" description="A shared, searchable library for the forum — pick a document to read it right here." />
 
       <Tabs defaultValue="library">
         <TabsList>

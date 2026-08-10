@@ -4,6 +4,7 @@ import { useActionState, useEffect, useMemo, useState, useTransition } from "rea
 import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock, Pencil, CalendarClock, PartyPopper, Target, HandHeart, AlertTriangle, Image as ImageIcon, Activity, BookOpen, FolderOpen, LibraryBig, Search, KeyRound, CheckCircle2, ScrollText, MessageSquare } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1068,10 +1069,7 @@ export function AdminPanel({
 }) {
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Admin</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Your forum command center — members, meetings, events, and communications.</p>
-      </div>
+      <PageHeader eyebrow="Moderator" title="Admin" description="Your forum command center — members, meetings, events, and communications." />
 
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap">

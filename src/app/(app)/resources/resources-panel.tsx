@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Upload, Search, FileText, Trash2, FolderPlus, LibraryBig, ChevronRight, ChevronDown, BookOpen, ArrowLeft } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -239,18 +240,10 @@ export function ResourcesPanel({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">EO Resources</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            The forum&apos;s full Moderator Resources library — pick a document to read it right here.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {isAdmin && <AddCategoryDialog />}
-          {isAdmin && <UploadDialog categories={categories} />}
-        </div>
-      </div>
+      <PageHeader eyebrow="Moderator Resources" title="EO Resources" description="The forum's full Moderator Resources library — pick a document to read it right here.">
+        {isAdmin && <AddCategoryDialog />}
+        {isAdmin && <UploadDialog categories={categories} />}
+      </PageHeader>
 
       {resources.length === 0 ? (
         <Card className="border-dashed">

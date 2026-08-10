@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Pencil, Briefcase } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
 
 function initials(name: string | null) {
   if (!name) return "?";
@@ -29,17 +30,15 @@ export default async function BioDirectoryPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">The members</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {featured.length > 0 ? `${featured.length} ${featured.length === 1 ? "member" : "members"} of the Q4 forum.` : "Get to know the forum."}
-          </p>
-        </div>
-        <Button asChild>
+      <PageHeader
+        eyebrow="EO Fort Worth · Q4 Forum"
+        title="The members"
+        description={featured.length > 0 ? `${featured.length} ${featured.length === 1 ? "member" : "members"} of the Q4 forum.` : "Get to know the forum."}
+      >
+        <Button asChild variant="secondary">
           <Link href="/bio/edit"><Pencil className="mr-1.5 h-4 w-4" /> Edit my bio</Link>
         </Button>
-      </div>
+      </PageHeader>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {featured.map((m) => {

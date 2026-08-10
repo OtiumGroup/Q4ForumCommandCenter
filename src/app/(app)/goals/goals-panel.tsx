@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Plus, Target, HandHeart, Pencil, Trash2, Briefcase, Heart, Sparkles, AlertTriangle, ListChecks, Bell } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -376,19 +377,15 @@ export function GoalsPanel({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Goals &amp; Accountability</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Set goals, track them, and ask for help when you need it.</p>
-        </div>
+      <PageHeader eyebrow="Accountability" title="Goals & Accountability" description="Set goals, track them, and ask for help when you need it.">
         <GoalDialog
           trigger={
-            <Button>
+            <Button variant="secondary">
               <Plus className="mr-1.5 h-4 w-4" /> New goal
             </Button>
           }
         />
-      </div>
+      </PageHeader>
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:max-w-3xl">
         <StatCard label="All goals" value={totalGoals} icon={ListChecks} tone="bg-secondary text-accent" active={what === "all"} onClick={() => setWhat("all")} />

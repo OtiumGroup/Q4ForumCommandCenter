@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Bell, Lock, Smartphone, UserCircle, Share, Plus, MoreVertical, Palette, Mail } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,10 +76,7 @@ export function SettingsPanel({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Your account, notifications, and app preferences.</p>
-      </div>
+      <PageHeader eyebrow="Account" title="Settings" description="Your account, notifications, and app preferences." />
 
       <Card>
         <CardHeader>
