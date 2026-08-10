@@ -39,6 +39,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 import { createEvent, deleteEvent, setRsvp } from "./actions";
 
 type EventRow = {
@@ -94,6 +95,7 @@ function DateBlock({ iso, accent }: { iso: string; accent: boolean }) {
 }
 
 function AddEventDialog() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +107,7 @@ function AddEventDialog() {
       if (res.ok) {
         toast.success(res.message ?? "Event created.");
         setOpen(false);
+        router.refresh();
       } else {
         setError(res.message ?? "Something went wrong.");
       }
@@ -392,8 +395,6 @@ export function EventsPanel({
     );
   }
 
-  const next = upcoming[0];
-
   return (
     <div className="flex flex-1 flex-col gap-6">
       <div className="relative overflow-hidden rounded-xl border border-border bg-card px-6 py-8 shadow-sm sm:px-8 sm:py-10">
@@ -404,10 +405,10 @@ export function EventsPanel({
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-accent">
-              <PartyPopper className="h-3.5 w-3.5" /> Upcoming Events
+              <PartyPopper className="h-3.5 w-3.5" /> EO Fort Worth · Q4 Forum
             </p>
             <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-              {next ? next.title : "Nothing on the calendar"}
+              Upcoming Events
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               EO events and member get-togethers — RSVP so everyone knows who&apos;s in.
