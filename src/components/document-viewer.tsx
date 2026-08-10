@@ -55,8 +55,13 @@ export function DocumentViewer({
         const res = await fetch(url);
         const arrayBuffer = await res.arrayBuffer();
         const result = await mammoth.convertToHtml({ arrayBuffer });
+        // Sanitize before rendering: mammoth does not guard against XSS, and
+        // members can upload .docx files, so a crafted document could otherwise
+        // inject script into another member's session.
+        const DOMPurify = (await import("dompurify")).default;
+        const clean = DOMPurify.sanitize(result.value, { USE_PROFILES: { html: true } });
         if (!cancelled && requestedUrl.current === url) {
-          setHtml(result.value);
+          setHtml(clean);
           setStatus("ready");
         }
       } catch {
