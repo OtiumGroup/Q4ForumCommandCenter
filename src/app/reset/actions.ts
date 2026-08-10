@@ -3,18 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export type VerifyState = { status: "idle" | "verified" | "error"; message?: string };
 export type SetPasswordState = { status: "idle" | "error"; message?: string };
-
-export async function verifyRecoveryToken(tokenHash: string): Promise<VerifyState> {
-  if (!tokenHash) return { status: "error", message: "This link is missing its token." };
-  const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
-  if (error) {
-    return { status: "error", message: "This link is invalid or has expired. Ask your moderator to resend it." };
-  }
-  return { status: "verified" };
-}
 
 export async function setNewPassword(_prev: SetPasswordState, formData: FormData): Promise<SetPasswordState> {
   const password = String(formData.get("password") || "");
@@ -23,6 +12,11 @@ export async function setNewPassword(_prev: SetPasswordState, formData: FormData
   if (password !== confirm) return { status: "error", message: "Passwords don't match." };
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "error", message: "Your link expired. Request a new one from the sign-in page." };
+
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { status: "error", message: "Could not set your password. Try again." };
 
