@@ -9,9 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -171,80 +170,120 @@ function GoalDialog({ goal, trigger }: { goal?: Goal; trigger: React.ReactNode }
   );
 }
 
-function MyGoalCard({ goal }: { goal: Goal }) {
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  tone,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  icon: typeof Target;
+  tone: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+        active ? "border-accent bg-accent/10" : "border-border bg-card hover:bg-secondary/50"
+      }`}
+    >
+      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div>
+        <p className="font-display text-xl font-semibold leading-none">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </div>
+    </button>
+  );
+}
+
+function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+        active ? "border-accent bg-accent text-accent-foreground" : "border-border bg-card text-muted-foreground hover:bg-secondary/60"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function GoalRow({ goal, owner, isOwn }: { goal: Goal; owner: ProfileLite | undefined; isOwn: boolean }) {
   const [pending, startTransition] = useTransition();
   const Icon = AREA_ICON[goal.area];
   const overdue = isOverdue(goal);
-
   return (
-    <Card className={overdue ? "border-destructive/50" : undefined}>
-      <CardContent className="space-y-2 py-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-2">
-            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-            <div>
-              <p className="font-medium">{goal.title}</p>
-              {goal.details && <p className="mt-0.5 text-sm text-muted-foreground">{goal.details}</p>}
-              {goal.due_date && (
-                <p className={`mt-1 text-xs ${overdue ? "font-medium text-destructive" : "text-muted-foreground"}`}>
-                  {overdue ? "Overdue — was due" : "Due"}{" "}
-                  {new Date(goal.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <GoalDialog goal={goal} trigger={
-              <Button variant="ghost" size="icon" aria-label="Edit goal">
-                <Pencil className="h-4 w-4" />
-              </Button>
-            } />
+    <div className={`flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5 ${overdue ? "border-destructive/40" : "border-border"}`}>
+      <Avatar className="h-8 w-8 shrink-0">
+        <AvatarImage src={owner?.photo_url ?? undefined} alt="" />
+        <AvatarFallback className="bg-secondary text-[10px] text-secondary-foreground">{initials(owner?.full_name ?? null)}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <Icon className="h-3.5 w-3.5 shrink-0 text-accent" />
+          <p className="truncate text-sm font-medium">{goal.title}</p>
+        </div>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          {owner?.full_name ?? "Member"}
+          {goal.due_date && (
+            <span className={overdue ? "text-destructive" : undefined}>
+              {" · "}
+              {overdue ? "overdue " : "due "}
+              {new Date(goal.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            </span>
+          )}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">
+        {goal.needs_help && (
+          <span className="hidden items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive sm:inline-flex">
+            <HandHeart className="h-3 w-3" /> Help
+          </span>
+        )}
+        <Badge className={STATUS_CLASS[goal.status]}>{STATUS_LABEL[goal.status]}</Badge>
+        {isOwn && (
+          <>
+            <GoalDialog
+              goal={goal}
+              trigger={
+                <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Edit goal">
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              }
+            />
             <Button
               variant="ghost"
               size="icon"
+              className="h-7 w-7"
               aria-label="Delete goal"
               disabled={pending}
               onClick={() =>
                 startTransition(async () => {
-                  const res = await deleteGoal(goal.id);
-                  if (!res.ok) toast.error(res.message ?? "Could not delete goal.");
+                  const r = await deleteGoal(goal.id);
+                  if (!r.ok) toast.error(r.message ?? "Could not delete.");
                 })
               }
             >
-              <Trash2 className="h-4 w-4 text-destructive" />
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
             </Button>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={goal.status}
-            onValueChange={(status) =>
-              startTransition(async () => {
-                const res = await setGoalStatus(goal.id, status);
-                if (!res.ok) toast.error(res.message ?? "Could not update status.");
-              })
-            }
-          >
-            <SelectTrigger className={`h-7 w-auto gap-1 rounded-full border-0 px-2.5 text-xs ${STATUS_CLASS[goal.status]}`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="not_started">Not started</SelectItem>
-              <SelectItem value="on_track">On track</SelectItem>
-              <SelectItem value="at_risk">At risk</SelectItem>
-              <SelectItem value="done">Done</SelectItem>
-            </SelectContent>
-          </Select>
-          {goal.needs_help && (
-            <Badge variant="destructive" className="gap-1">
-              <HandHeart className="h-3 w-3" /> Needs help
-            </Badge>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
+
+type WhatFilter = "all" | "at_risk" | "needs_help" | "overdue";
 
 export function GoalsPanel({
   goals,
@@ -261,176 +300,97 @@ export function GoalsPanel({
     return m;
   }, [profiles]);
 
-  const myGoals = goals.filter((g) => g.member_id === currentUserId);
-  const areas: Area[] = ["business", "personal", "life"];
-
-  const forumGoals = [...goals].sort((a, b) => (a.needs_help === b.needs_help ? 0 : a.needs_help ? -1 : 1));
-  const goalsByMember = useMemo(() => {
-    const m = new Map<string, Goal[]>();
-    forumGoals.forEach((g) => {
-      const list = m.get(g.member_id) ?? [];
-      list.push(g);
-      m.set(g.member_id, list);
-    });
-    return m;
-  }, [forumGoals]);
+  const [who, setWho] = useState<string>("everyone"); // "everyone" | "me" | memberId
+  const [what, setWhat] = useState<WhatFilter>("all");
 
   const totalGoals = goals.length;
   const atRisk = goals.filter((g) => g.status === "at_risk").length;
   const needingHelp = goals.filter((g) => g.needs_help).length;
   const overdueCount = goals.filter(isOverdue).length;
 
+  const membersWithGoals = useMemo(() => {
+    const ids = Array.from(new Set(goals.map((g) => g.member_id)));
+    return ids
+      .map((id) => nameById.get(id))
+      .filter((p): p is ProfileLite => Boolean(p) && p!.id !== currentUserId)
+      .sort((a, b) => (a.full_name ?? "").localeCompare(b.full_name ?? ""));
+  }, [goals, nameById, currentUserId]);
+
+  const filtered = useMemo(() => {
+    return goals
+      .filter((g) => {
+        if (who === "me") {
+          if (g.member_id !== currentUserId) return false;
+        } else if (who !== "everyone" && g.member_id !== who) {
+          return false;
+        }
+        if (what === "at_risk" && g.status !== "at_risk") return false;
+        if (what === "needs_help" && !g.needs_help) return false;
+        if (what === "overdue" && !isOverdue(g)) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const score = (g: Goal) => (g.needs_help ? 0 : 1) + (isOverdue(g) ? 0 : 1);
+        const sa = score(a);
+        const sb = score(b);
+        if (sa !== sb) return sa - sb;
+        return (a.due_date ?? "9999-12-31").localeCompare(b.due_date ?? "9999-12-31");
+      });
+  }, [goals, who, what, currentUserId]);
+
+  const toggle = (f: WhatFilter) => setWhat((prev) => (prev === f ? "all" : f));
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">Goals &amp; Accountability</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Set goals, track them, and ask for help when you need it.
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Set goals, track them, and ask for help when you need it.</p>
         </div>
-        <GoalDialog trigger={
-          <Button>
-            <Plus className="mr-1.5 h-4 w-4" /> New goal
-          </Button>
-        } />
+        <GoalDialog
+          trigger={
+            <Button>
+              <Plus className="mr-1.5 h-4 w-4" /> New goal
+            </Button>
+          }
+        />
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:max-w-2xl">
-        <Card>
-          <CardContent className="flex items-center gap-3 py-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-accent">
-              <ListChecks className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="font-display text-xl font-semibold leading-none">{totalGoals}</p>
-              <p className="text-xs text-muted-foreground">Total goals</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 py-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/20 text-warning-foreground">
-              <AlertTriangle className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="font-display text-xl font-semibold leading-none">{atRisk}</p>
-              <p className="text-xs text-muted-foreground">At risk</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 py-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <HandHeart className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="font-display text-xl font-semibold leading-none">{needingHelp}</p>
-              <p className="text-xs text-muted-foreground">Need help</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 py-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <AlertTriangle className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="font-display text-xl font-semibold leading-none">{overdueCount}</p>
-              <p className="text-xs text-muted-foreground">Overdue</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:max-w-3xl">
+        <StatCard label="All goals" value={totalGoals} icon={ListChecks} tone="bg-secondary text-accent" active={what === "all"} onClick={() => setWhat("all")} />
+        <StatCard label="At risk" value={atRisk} icon={AlertTriangle} tone="bg-warning/20 text-warning-foreground" active={what === "at_risk"} onClick={() => toggle("at_risk")} />
+        <StatCard label="Needs help" value={needingHelp} icon={HandHeart} tone="bg-destructive/10 text-destructive" active={what === "needs_help"} onClick={() => toggle("needs_help")} />
+        <StatCard label="Overdue" value={overdueCount} icon={AlertTriangle} tone="bg-destructive/10 text-destructive" active={what === "overdue"} onClick={() => toggle("overdue")} />
       </div>
 
-      <Tabs defaultValue="mine">
-        <TabsList>
-          <TabsTrigger value="mine">My Goals</TabsTrigger>
-          <TabsTrigger value="forum">Forum</TabsTrigger>
-        </TabsList>
+      <div className="mb-4 flex flex-wrap gap-2">
+        <FilterChip active={who === "everyone"} onClick={() => setWho("everyone")}>Everyone</FilterChip>
+        <FilterChip active={who === "me"} onClick={() => setWho("me")}>My goals</FilterChip>
+        {membersWithGoals.map((m) => (
+          <FilterChip key={m.id} active={who === m.id} onClick={() => setWho(m.id)}>
+            <Avatar className="h-4 w-4">
+              <AvatarImage src={m.photo_url ?? undefined} alt="" />
+              <AvatarFallback className="bg-secondary text-[8px] text-secondary-foreground">{initials(m.full_name)}</AvatarFallback>
+            </Avatar>
+            {(m.full_name ?? "Member").split(" ")[0]}
+          </FilterChip>
+        ))}
+      </div>
 
-        <TabsContent value="mine" className="mt-4 space-y-6">
-          {areas.map((area) => {
-            const areaGoals = myGoals.filter((g) => g.area === area);
-            if (areaGoals.length === 0) return null;
-            const Icon = AREA_ICON[area];
-            return (
-              <div key={area}>
-                <h2 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                  <Icon className="h-3.5 w-3.5" /> {AREA_LABEL[area]}
-                </h2>
-                <div className="space-y-2">
-                  {areaGoals.map((g) => (
-                    <MyGoalCard key={g.id} goal={g} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-          {myGoals.length === 0 && (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center gap-2 py-16 text-center">
-                <Target className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  No goals yet — add one to start tracking.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="forum" className="mt-4 space-y-4">
-          {Array.from(goalsByMember.entries()).map(([memberId, memberGoals]) => {
-            const profile = nameById.get(memberId);
-            return (
-              <Card key={memberId}>
-                <CardHeader className="flex-row items-center gap-3 space-y-0 py-4">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.photo_url ?? undefined} alt="" />
-                    <AvatarFallback className="bg-secondary text-xs text-secondary-foreground">
-                      {initials(profile?.full_name ?? null)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <CardTitle className="text-sm font-medium">{profile?.full_name ?? "Member"}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 pt-0">
-                  {memberGoals.map((g) => {
-                    const Icon = AREA_ICON[g.area];
-                    return (
-                      <div key={g.id} className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-0">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-sm">{g.title}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {isOverdue(g) && (
-                            <Badge variant="destructive" className="gap-1">
-                              <AlertTriangle className="h-3 w-3" /> Overdue
-                            </Badge>
-                          )}
-                          {g.needs_help && (
-                            <Badge variant="destructive" className="gap-1">
-                              <HandHeart className="h-3 w-3" /> Needs help
-                            </Badge>
-                          )}
-                          <Badge className={STATUS_CLASS[g.status]}>{STATUS_LABEL[g.status]}</Badge>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            );
-          })}
-          {goalsByMember.size === 0 && (
-            <Card className="border-dashed">
-              <CardContent className="py-16 text-center text-sm text-muted-foreground">
-                No goals shared yet.
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+      <div className="space-y-2">
+        {filtered.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center gap-2 py-16 text-center">
+              <Target className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                {goals.length === 0 ? "No goals yet — add one to start tracking." : "Nothing matches this filter."}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          filtered.map((g) => <GoalRow key={g.id} goal={g} owner={nameById.get(g.member_id)} isOwn={g.member_id === currentUserId} />)
+        )}
+      </div>
     </div>
   );
 }
