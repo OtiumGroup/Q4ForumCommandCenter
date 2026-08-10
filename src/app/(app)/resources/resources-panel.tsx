@@ -2,7 +2,8 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Upload, Search, FileText, Trash2, FolderPlus, LibraryBig, ChevronRight, ChevronDown, BookOpen } from "lucide-react";
+import { Upload, Search, FileText, Trash2, FolderPlus, LibraryBig, ChevronRight, ChevronDown, BookOpen, ArrowLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -198,6 +199,7 @@ export function ResourcesPanel({
   const [, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(resources[0]?.id ?? null);
+  const [mobileDocOpen, setMobileDocOpen] = useState(false);
 
   const q = query.trim().toLowerCase();
   const filtered = q ? resources.filter((r) => r.title.toLowerCase().includes(q)) : resources;
@@ -260,7 +262,7 @@ export function ResourcesPanel({
         </Card>
       ) : (
         <div className="grid flex-1 gap-4 lg:grid-cols-[240px_1fr]">
-          <div className="flex flex-col gap-3">
+          <div className={cn("flex-col gap-3", mobileDocOpen ? "hidden lg:flex" : "flex")}>
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="pl-8" />
@@ -303,7 +305,7 @@ export function ResourcesPanel({
                             >
                               <button
                                 type="button"
-                                onClick={() => setSelectedId(r.id)}
+                                onClick={() => { setSelectedId(r.id); setMobileDocOpen(true); }}
                                 className={`flex flex-1 items-center gap-2 truncate py-2 text-left ${
                                   selectedId === r.id ? "font-medium text-accent" : "text-foreground"
                                 }`}
@@ -359,7 +361,7 @@ export function ResourcesPanel({
                         <li key={r.id}>
                           <button
                             type="button"
-                            onClick={() => setSelectedId(r.id)}
+                            onClick={() => { setSelectedId(r.id); setMobileDocOpen(true); }}
                             className={`flex w-full items-center gap-2 py-2 pl-7 pr-3 text-left text-sm transition-colors hover:bg-secondary/60 ${
                               selectedId === r.id ? "bg-accent/10 font-medium text-accent" : "text-foreground"
                             }`}
@@ -380,7 +382,16 @@ export function ResourcesPanel({
             </div>
           </div>
 
-          <DocumentViewer url={selected?.url ?? null} title={selected?.title ?? ""} fileType={selected?.file_type} className="lg:min-h-[80vh]" />
+          <div className={cn("min-w-0 flex-col", mobileDocOpen ? "flex" : "hidden lg:flex")}>
+            <button
+              type="button"
+              onClick={() => setMobileDocOpen(false)}
+              className="mb-3 inline-flex items-center gap-1.5 self-start text-sm font-medium text-accent lg:hidden"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to list
+            </button>
+            <DocumentViewer url={selected?.url ?? null} title={selected?.title ?? ""} fileType={selected?.file_type} className="min-h-[70vh] lg:min-h-[80vh]" />
+          </div>
         </div>
       )}
     </div>

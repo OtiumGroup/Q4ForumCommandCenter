@@ -95,7 +95,35 @@ export function DocumentViewer({
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
-        {isPdf && <iframe src={url} className="h-full min-h-[70vh] w-full" title={title} />}
+        {isPdf && (
+          <>
+            <iframe src={url} className="hidden h-full min-h-[70vh] w-full lg:block" title={title} />
+            <div className="flex min-h-[55vh] flex-col items-center justify-center gap-4 p-8 text-center lg:hidden">
+              <FileText className="h-12 w-12 text-accent" />
+              <div>
+                <p className="font-medium text-foreground">{title || "Document"}</p>
+                <p className="mt-1 text-sm text-muted-foreground">Open the document to read, zoom, and scroll — or download it to keep.</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                >
+                  <FileText className="h-4 w-4" /> Open document
+                </a>
+                <a
+                  href={url}
+                  download
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary/60"
+                >
+                  <Download className="h-4 w-4" /> Download
+                </a>
+              </div>
+            </div>
+          </>
+        )}
 
         {isImage && (
           <div className="flex justify-center bg-muted/40 p-4">

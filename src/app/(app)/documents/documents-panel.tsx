@@ -13,7 +13,9 @@ import {
   ChevronRight,
   ChevronDown,
   FolderOpen,
+  ArrowLeft,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -319,6 +321,7 @@ export function DocumentsPanel({
   const [, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(documents[0]?.id ?? null);
+  const [mobileDocOpen, setMobileDocOpen] = useState(false);
 
   const categoryName = useMemo(() => {
     const m = new Map<string, string>();
@@ -380,7 +383,7 @@ export function DocumentsPanel({
             </Card>
           ) : (
             <div className="grid flex-1 gap-4 lg:grid-cols-[240px_1fr]">
-              <div className="flex flex-col gap-3">
+              <div className={cn("flex-col gap-3", mobileDocOpen ? "hidden lg:flex" : "flex")}>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="pl-8" />
@@ -424,7 +427,7 @@ export function DocumentsPanel({
                                 >
                                   <button
                                     type="button"
-                                    onClick={() => setSelectedId(doc.id)}
+                                    onClick={() => { setSelectedId(doc.id); setMobileDocOpen(true); }}
                                     className={`flex flex-1 items-center gap-2 truncate py-2 text-left ${
                                       selectedId === doc.id ? "font-medium text-accent" : "text-foreground"
                                     }`}
@@ -480,7 +483,7 @@ export function DocumentsPanel({
                             <li key={doc.id}>
                               <button
                                 type="button"
-                                onClick={() => setSelectedId(doc.id)}
+                                onClick={() => { setSelectedId(doc.id); setMobileDocOpen(true); }}
                                 className={`flex w-full items-center gap-2 py-2 pl-7 pr-3 text-left text-sm transition-colors hover:bg-secondary/60 ${
                                   selectedId === doc.id ? "bg-accent/10 font-medium text-accent" : "text-foreground"
                                 }`}
@@ -501,11 +504,18 @@ export function DocumentsPanel({
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className={cn("min-w-0 flex-col gap-2", mobileDocOpen ? "flex" : "hidden lg:flex")}>
+                <button
+                  type="button"
+                  onClick={() => setMobileDocOpen(false)}
+                  className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-accent lg:hidden"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Back to list
+                </button>
                 {selected?.description && (
                   <p className="rounded-md bg-secondary/40 px-3 py-2 text-sm text-muted-foreground">{selected.description}</p>
                 )}
-                <DocumentViewer url={selected?.url ?? null} title={selected?.title ?? ""} fileType={selected?.file_type} className="lg:min-h-[70vh]" />
+                <DocumentViewer url={selected?.url ?? null} title={selected?.title ?? ""} fileType={selected?.file_type} className="min-h-[70vh] lg:min-h-[70vh]" />
               </div>
             </div>
           )}
