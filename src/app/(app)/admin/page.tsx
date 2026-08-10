@@ -19,7 +19,7 @@ export default async function AdminPage() {
     redirect("/home");
   }
 
-  const [{ data: members }, { data: invites }, { data: broadcasts }] = await Promise.all([
+  const [{ data: members }, { data: invites }, { data: broadcasts }, { data: meetings }] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, email, full_name, role, status, photo_url, created_at")
@@ -32,6 +32,10 @@ export default async function AdminPage() {
       .from("broadcasts")
       .select("id, title, body, created_at")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("meetings")
+      .select("id, title, starts_at, theme, agenda")
+      .order("starts_at", { ascending: true }),
   ]);
 
   return (
@@ -40,6 +44,7 @@ export default async function AdminPage() {
       members={members ?? []}
       invites={invites ?? []}
       broadcasts={broadcasts ?? []}
+      meetings={meetings ?? []}
     />
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { useFormStatus } from "react-dom";
-import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock, Pencil } from "lucide-react";
+import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock, Pencil, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -287,11 +288,82 @@ function UsersTab({ members, currentUserId }: { members: Member[]; currentUserId
                   <Badge variant={statusVariant(m.status)} className="capitalize">
                     {m.status}
                   </Badge>
+                  {m.status === "invited" && m.email && <ResendInviteButton email={m.email} />}
                   <EditMemberDialog member={m} currentUserId={currentUserId} />
                   {m.id !== currentUserId && <DeleteMemberButton member={m} />}
                 </div>
               </li>
             ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ResendInviteButton({ email }: { email: string }) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label="Resend invite"
+      disabled={pending}
+      onClick={() =>
+        startTransition(async () => {
+          const r = await resendInvite(email);
+          if (r.ok) toast.success("Invite resent.");
+          else toast.error(r.message ?? "Could not resend.");
+        })
+      }
+    >
+      <RefreshCw className="h-4 w-4 text-muted-foreground" />
+    </Button>
+  );
+}
+
+type AdminMeeting = { id: string; title: string; starts_at: string; theme: string | null; agenda: unknown };
+
+function MeetingsTab({ meetings }: { meetings: AdminMeeting[] }) {
+  const now = new Date(new Date().toDateString());
+  const upcoming = meetings.filter((m) => new Date(m.starts_at) >= now);
+  const list = upcoming.length > 0 ? upcoming : meetings;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <CalendarClock className="h-4 w-4 text-accent" /> Forum meetings &amp; agendas
+        </CardTitle>
+        <CardDescription>Build the schedule for each forum date — members read it, print it, and RSVP.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {list.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">No meetings yet — add them on the Upcoming Meetings page.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {list.map((m) => {
+              const blocks = Array.isArray(m.agenda) ? m.agenda.length : 0;
+              return (
+                <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                  <div>
+                    <p className="font-medium">{m.theme || m.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(m.starts_at).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                      {" · "}
+                      {blocks > 0 ? `${blocks}-item agenda` : "No agenda yet"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button asChild variant="outline" size="sm"><Link href={`/meetings/${m.id}`}>View</Link></Button>
+                    <Button asChild size="sm">
+                      <Link href={`/meetings/${m.id}/edit`}>
+                        <Pencil className="mr-1.5 h-3.5 w-3.5" /> {blocks > 0 ? "Edit agenda" : "Build agenda"}
+                      </Link>
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </CardContent>
@@ -557,11 +629,13 @@ export function AdminPanel({
   members,
   invites,
   broadcasts,
+  meetings,
 }: {
   currentUserId: string;
   members: Member[];
   invites: Invite[];
   broadcasts: Broadcast[];
+  meetings: AdminMeeting[];
 }) {
   const activeMembers = members.filter((m) => m.status === "active").length;
   const pendingInvites = invites.filter((i) => i.status === "pending").length;
@@ -604,6 +678,7 @@ export function AdminPanel({
         <TabsList>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="invites">Invites</TabsTrigger>
+          <TabsTrigger value="meetings">Meetings</TabsTrigger>
           <TabsTrigger value="communications">Communications</TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="mt-4">
@@ -611,6 +686,9 @@ export function AdminPanel({
         </TabsContent>
         <TabsContent value="invites" className="mt-4">
           <InvitesTab invites={invites} />
+        </TabsContent>
+        <TabsContent value="meetings" className="mt-4">
+          <MeetingsTab meetings={meetings} />
         </TabsContent>
         <TabsContent value="communications" className="mt-4">
           <CommunicationsTab broadcasts={broadcasts} />
