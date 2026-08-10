@@ -4,21 +4,36 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { saveAgenda, type AgendaBlock } from "../../actions";
 
 type Block = { time: string; title: string; speaker: string; detail: string };
+type Copyable = { id: string; label: string; agenda: AgendaBlock[] };
+
+const TEMPLATE: Block[] = [
+  { time: "11:30 AM", title: "Arrivals & lunch", speaker: "", detail: "Grab a plate and settle in." },
+  { time: "12:00 PM", title: "Opening & check-ins", speaker: "", detail: "Each member shares a high and a low since last forum." },
+  { time: "12:30 PM", title: "5% / life update", speaker: "", detail: "Where everyone is across business, family, and personal." },
+  { time: "1:00 PM", title: "Member deep dive", speaker: "TBD", detail: "One member presents a challenge; the forum explores it." },
+  { time: "2:00 PM", title: "Business & housekeeping", speaker: "", detail: "Events, SAP schedule, retreat planning." },
+  { time: "2:30 PM", title: "Closing & commitments", speaker: "", detail: "One commitment each before next forum." },
+];
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 }
+function toBlocks(a: AgendaBlock[]): Block[] {
+  return a.map((b) => ({ time: b.time ?? "", title: b.title ?? "", speaker: b.speaker ?? "", detail: b.detail ?? "" }));
+}
 
 export function AgendaForm({
   meeting,
+  copyable = [],
 }: {
   meeting: {
     id: string;
@@ -30,6 +45,7 @@ export function AgendaForm({
     notes: string | null;
     agenda: AgendaBlock[];
   };
+  copyable?: Copyable[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -38,9 +54,7 @@ export function AgendaForm({
   const [location, setLocation] = useState(meeting.location ?? "");
   const [notes, setNotes] = useState(meeting.notes ?? "");
   const [blocks, setBlocks] = useState<Block[]>(
-    meeting.agenda.length > 0
-      ? meeting.agenda.map((b) => ({ time: b.time ?? "", title: b.title ?? "", speaker: b.speaker ?? "", detail: b.detail ?? "" }))
-      : [{ time: "", title: "", speaker: "", detail: "" }]
+    meeting.agenda.length > 0 ? toBlocks(meeting.agenda) : [{ time: "", title: "", speaker: "", detail: "" }]
   );
 
   function update(i: number, field: keyof Block, val: string) {
@@ -51,6 +65,28 @@ export function AgendaForm({
   }
   function remove(i: number) {
     setBlocks((prev) => prev.filter((_, idx) => idx !== i));
+  }
+  function move(i: number, dir: -1 | 1) {
+    setBlocks((prev) => {
+      const j = i + dir;
+      if (j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }
+  function hasContent() {
+    return blocks.some((b) => b.time || b.title || b.speaker || b.detail);
+  }
+  function loadTemplate() {
+    if (hasContent() && !window.confirm("Replace the current schedule with the standard forum template?")) return;
+    setBlocks(TEMPLATE.map((b) => ({ ...b })));
+  }
+  function copyFrom(id: string) {
+    const src = copyable.find((c) => c.id === id);
+    if (!src) return;
+    if (hasContent() && !window.confirm("Replace the current schedule with that meeting's agenda?")) return;
+    setBlocks(toBlocks(src.agenda));
   }
 
   function save() {
@@ -99,30 +135,66 @@ export function AgendaForm({
         </div>
 
         <div>
-          <div className="mb-2 flex items-center justify-between">
-            <Label>Schedule</Label>
-            <Button type="button" variant="outline" size="sm" onClick={add}><Plus className="mr-1.5 h-4 w-4" /> Add block</Button>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <Label className="text-base">Schedule</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={loadTemplate}>
+                <Sparkles className="mr-1.5 h-4 w-4" /> Standard template
+              </Button>
+              {copyable.length > 0 && (
+                <Select onValueChange={copyFrom}>
+                  <SelectTrigger className="h-9 w-[190px]"><SelectValue placeholder="Copy from…" /></SelectTrigger>
+                  <SelectContent>
+                    {copyable.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Button type="button" variant="outline" size="sm" onClick={add}><Plus className="mr-1.5 h-4 w-4" /> Add block</Button>
+            </div>
           </div>
-          <div className="space-y-3">
-            {blocks.map((b, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-3">
-                <div className="flex gap-2">
-                  <Input value={b.time} onChange={(e) => update(i, "time", e.target.value)} placeholder="Time (e.g. 1:00 PM)" className="w-40" />
-                  <Input value={b.title} onChange={(e) => update(i, "title", e.target.value)} placeholder="Agenda item" className="flex-1" />
-                  <Button type="button" variant="ghost" size="icon" aria-label="Remove block" onClick={() => remove(i)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <Input value={b.speaker} onChange={(e) => update(i, "speaker", e.target.value)} placeholder="Speaker / who's up (optional)" className="w-56" />
-                  <Input value={b.detail} onChange={(e) => update(i, "detail", e.target.value)} placeholder="Detail (optional)" className="flex-1" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="flex justify-end gap-2 pt-2">
+          {blocks.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
+              No schedule yet — add a block, load the template, or copy from another meeting.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {blocks.map((b, i) => (
+                <div key={i} className="rounded-xl border border-border bg-card p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-accent">{i + 1}</span>
+                    <div className="flex items-center gap-0.5">
+                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7" aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)}>
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7" aria-label="Move down" disabled={i === blocks.length - 1} onClick={() => move(i, 1)}>
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7" aria-label="Remove block" onClick={() => remove(i)}>
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={b.time} onChange={(e) => update(i, "time", e.target.value)} placeholder="Time (e.g. 1:00 PM)" className="w-36" />
+                    <Input value={b.title} onChange={(e) => update(i, "title", e.target.value)} placeholder="Agenda item" className="flex-1" />
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <Input value={b.speaker} onChange={(e) => update(i, "speaker", e.target.value)} placeholder="Speaker / who's up (optional)" className="w-56" />
+                    <Input value={b.detail} onChange={(e) => update(i, "detail", e.target.value)} placeholder="Detail (optional)" className="flex-1" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="sticky bottom-0 mt-4 flex items-center justify-between gap-2 border-t border-border bg-background/95 py-3 backdrop-blur">
+        <p className="text-xs text-muted-foreground">{blocks.filter((b) => b.title.trim()).length} item{blocks.filter((b) => b.title.trim()).length === 1 ? "" : "s"} in the schedule</p>
+        <div className="flex gap-2">
           <Button asChild variant="ghost"><Link href={`/meetings/${meeting.id}`}>Cancel</Link></Button>
           <Button onClick={save} disabled={pending}>{pending ? "Saving…" : "Save agenda"}</Button>
         </div>

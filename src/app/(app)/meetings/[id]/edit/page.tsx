@@ -9,13 +9,22 @@ export default async function EditAgendaPage({ params }: { params: Promise<{ id:
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: meeting }, { data: me }] = await Promise.all([
+  const [{ data: meeting }, { data: me }, { data: others }] = await Promise.all([
     supabase.from("meetings").select("*").eq("id", id).single(),
     supabase.from("profiles").select("role").eq("id", user?.id ?? "").single(),
+    supabase.from("meetings").select("id, title, starts_at, theme, agenda").neq("id", id).order("starts_at", { ascending: false }),
   ]);
 
   if (!meeting) notFound();
   if (me?.role !== "admin") redirect(`/meetings/${id}`);
+
+  const copyable = (others ?? [])
+    .filter((m) => Array.isArray(m.agenda) && m.agenda.length > 0)
+    .map((m) => ({
+      id: m.id,
+      label: `${m.theme || m.title} · ${new Date(m.starts_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`,
+      agenda: m.agenda as { time?: string; title: string; speaker?: string; detail?: string }[],
+    }));
 
   return (
     <AgendaForm
@@ -29,6 +38,7 @@ export default async function EditAgendaPage({ params }: { params: Promise<{ id:
         notes: meeting.notes ?? null,
         agenda: Array.isArray(meeting.agenda) ? meeting.agenda : [],
       }}
+      copyable={copyable}
     />
   );
 }
