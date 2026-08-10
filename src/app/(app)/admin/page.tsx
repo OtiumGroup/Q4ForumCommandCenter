@@ -29,6 +29,7 @@ export default async function AdminPage() {
     { count: booksCount },
     { count: documentsCount },
     { count: resourcesCount },
+    { data: authStatus },
   ] = await Promise.all([
     supabase.from("profiles").select("id, email, full_name, role, status, photo_url, created_at").order("created_at", { ascending: true }),
     supabase.from("invites").select("id, email, full_name, role, status, personal_note, created_at").order("created_at", { ascending: false }),
@@ -42,7 +43,14 @@ export default async function AdminPage() {
     supabase.from("media_items").select("id", { count: "exact", head: true }),
     supabase.from("documents").select("id", { count: "exact", head: true }),
     supabase.from("eo_resources").select("id", { count: "exact", head: true }),
+    supabase.rpc("admin_member_auth_status"),
   ]);
+
+  const setUp = new Set(
+    ((authStatus as { id: string; last_sign_in_at: string | null }[] | null) ?? [])
+      .filter((a) => a.last_sign_in_at)
+      .map((a) => a.id)
+  );
 
   const mem = members ?? [];
   const nameById = new Map(mem.map((m) => [m.id, m.full_name] as const));
@@ -73,6 +81,10 @@ export default async function AdminPage() {
 
   const invitedMembers = mem
     .filter((m) => m.status === "invited")
+    .map((m) => ({ id: m.id, full_name: m.full_name, email: m.email }));
+
+  const notOnboarded = mem
+    .filter((m) => m.status !== "suspended" && !setUp.has(m.id))
     .map((m) => ({ id: m.id, full_name: m.full_name, email: m.email }));
 
   const eventAttending = new Map<string, number>();
@@ -106,9 +118,12 @@ export default async function AdminPage() {
       books: booksCount ?? 0,
       documents: documentsCount ?? 0,
       resources: resourcesCount ?? 0,
+      onboarded: mem.filter((m) => setUp.has(m.id)).length,
+      notOnboarded: notOnboarded.length,
     },
     needsHelp,
     invitedMembers,
+    notOnboarded,
     nextMeeting,
     activity,
   };
@@ -125,7 +140,7 @@ export default async function AdminPage() {
   return (
     <AdminPanel
       currentUserId={user.id}
-      members={mem}
+      members={mem.map((m) => ({ ...m, onboarded: setUp.has(m.id) }))}
       invites={invites ?? []}
       broadcasts={broadcasts ?? []}
       meetings={meetings ?? []}

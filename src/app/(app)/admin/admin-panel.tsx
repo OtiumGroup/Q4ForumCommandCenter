@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useFormStatus } from "react-dom";
-import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock, Pencil, CalendarClock, PartyPopper, Target, HandHeart, AlertTriangle, Image as ImageIcon, Activity, ArrowRight, BookOpen, FolderOpen, LibraryBig, Search } from "lucide-react";
+import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock, Pencil, CalendarClock, PartyPopper, Target, HandHeart, AlertTriangle, Image as ImageIcon, Activity, ArrowRight, BookOpen, FolderOpen, LibraryBig, Search, KeyRound, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +52,7 @@ type Member = {
   status: "invited" | "active" | "suspended";
   photo_url: string | null;
   created_at: string;
+  onboarded?: boolean;
 };
 
 type Invite = {
@@ -86,9 +87,12 @@ export type AdminOverview = {
     books: number;
     documents: number;
     resources: number;
+    onboarded: number;
+    notOnboarded: number;
   };
   needsHelp: { goalId: string; title: string; memberId: string; memberName: string }[];
   invitedMembers: { id: string; full_name: string | null; email: string | null }[];
+  notOnboarded: { id: string; full_name: string | null; email: string | null }[];
   nextMeeting: { id: string; title: string; theme: string | null; starts_at: string; hasAgenda: boolean; attending: number } | null;
   activity: { id: string; text: string; sub: string; when: string; kind: string }[];
 };
@@ -325,6 +329,11 @@ function UsersTab({ members, currentUserId }: { members: Member[]; currentUserId
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {m.onboarded ? (
+                    <span className="hidden items-center gap-1 text-xs font-medium text-emerald-600 sm:inline-flex dark:text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" /> Set up</span>
+                  ) : (
+                    <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:inline-flex"><Clock className="h-3.5 w-3.5" /> Not set up</span>
+                  )}
                   <Badge variant={statusVariant(m.status)} className="capitalize">
                     {m.status}
                   </Badge>
@@ -408,6 +417,27 @@ function MeetingsTab({ meetings }: { meetings: AdminMeeting[] }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function SendWelcomeOneButton({ email }: { email: string }) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label="Send password-setup email"
+      disabled={pending}
+      onClick={() =>
+        startTransition(async () => {
+          const r = await sendWelcome(email);
+          if (r.ok) toast.success(r.message ?? "Sent.");
+          else toast.error(r.message ?? "Could not send.");
+        })
+      }
+    >
+      <Mail className="h-4 w-4 text-muted-foreground" />
+    </Button>
   );
 }
 
@@ -769,6 +799,7 @@ function OverviewTab({ overview }: { overview: AdminOverview }) {
         <StatTile label="Needs help" value={s.needsHelp} icon={HandHeart} href="/goals" tone="warn" />
         <StatTile label="Overdue goals" value={s.overdueGoals} icon={AlertTriangle} tone="warn" />
         <StatTile label="Suspended" value={s.suspendedMembers} icon={UsersIcon} tone="warn" />
+        <StatTile label="Not set up" value={s.notOnboarded} icon={KeyRound} tone="warn" />
         <StatTile label="Gallery photos" value={s.photos} icon={ImageIcon} href="/gallery" />
         <StatTile label="Books & podcasts" value={s.books} icon={BookOpen} href="/books" />
         <StatTile label="Documents" value={s.documents} icon={FolderOpen} href="/documents" />
@@ -801,6 +832,21 @@ function OverviewTab({ overview }: { overview: AdminOverview }) {
               <p className="text-sm text-muted-foreground">No upcoming meetings scheduled.</p>
             )}
 
+            {overview.notOnboarded.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Haven&apos;t set a password yet ({overview.notOnboarded.length})</p>
+                <ul className="space-y-1">
+                  {overview.notOnboarded.slice(0, 6).map((m) => (
+                    <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate">{m.full_name ?? m.email}</span>
+                      {m.email && <SendWelcomeOneButton email={m.email} />}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-2"><SendWelcomeAllButton /></div>
+              </div>
+            )}
+
             {overview.invitedMembers.length > 0 && (
               <div>
                 <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Invited, not yet active ({overview.invitedMembers.length})</p>
@@ -829,7 +875,7 @@ function OverviewTab({ overview }: { overview: AdminOverview }) {
               </div>
             )}
 
-            {overview.invitedMembers.length === 0 && overview.needsHelp.length === 0 && overview.nextMeeting && (
+            {overview.invitedMembers.length === 0 && overview.needsHelp.length === 0 && overview.notOnboarded.length === 0 && overview.nextMeeting && (
               <p className="text-sm text-muted-foreground">All caught up — nothing needs attention right now.</p>
             )}
           </CardContent>
