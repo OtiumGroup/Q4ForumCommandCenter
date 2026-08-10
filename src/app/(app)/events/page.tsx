@@ -11,7 +11,7 @@ export default async function EventsPage() {
   const [{ data: events }, { data: rsvps }, { data: profiles }, { data: myProfile }] = await Promise.all([
     supabase
       .from("events")
-      .select("id, source, title, description, starts_at, ends_at, address, link, created_by, notify_forum")
+      .select("id, source, title, description, starts_at, ends_at, address, link, image_url, created_by, notify_forum")
       .order("starts_at", { ascending: true }),
     supabase.from("event_rsvps").select("event_id, member_id, status"),
     supabase.from("profiles").select("id, full_name, photo_url"),

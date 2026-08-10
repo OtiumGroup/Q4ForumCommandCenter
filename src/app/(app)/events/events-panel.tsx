@@ -50,6 +50,7 @@ type EventRow = {
   ends_at: string | null;
   address: string | null;
   link: string | null;
+  image_url: string | null;
   created_by: string | null;
   notify_forum: boolean;
 };
@@ -290,6 +291,11 @@ function EventCard({
               {event.description && <p className="mt-2 text-sm text-muted-foreground">{event.description}</p>}
             </div>
           </div>
+          <div className="flex shrink-0 items-start gap-2">
+          {event.image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={event.image_url} alt="" className="h-20 w-20 rounded-lg border border-border object-cover sm:h-24 sm:w-24" />
+          )}
           {canManage && (
             <Button
               variant="ghost"
@@ -306,6 +312,7 @@ function EventCard({
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           )}
+          </div>
         </div>
 
         <RsvpControls eventId={event.id} myStatus={myStatus} />
