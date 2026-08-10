@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useFormStatus } from "react-dom";
-import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock, Pencil, CalendarClock, PartyPopper, Target, HandHeart, AlertTriangle, Image as ImageIcon, Activity, BookOpen, FolderOpen, LibraryBig, Search, KeyRound, CheckCircle2 } from "lucide-react";
+import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock, Pencil, CalendarClock, PartyPopper, Target, HandHeart, AlertTriangle, Image as ImageIcon, Activity, BookOpen, FolderOpen, LibraryBig, Search, KeyRound, CheckCircle2, ScrollText, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,7 @@ import {
   deleteBroadcast,
 } from "./actions";
 import { deleteEvent } from "@/app/(app)/events/actions";
+import { setRequestStatus, deleteRequest } from "@/app/(app)/constitution/actions";
 
 type Member = {
   id: string;
@@ -89,10 +90,14 @@ export type AdminOverview = {
     resources: number;
     onboarded: number;
     notOnboarded: number;
+    constitutionSigned: number;
+    constitutionTotal: number;
+    openRequests: number;
   };
   needsHelp: { goalId: string; title: string; memberId: string; memberName: string }[];
   invitedMembers: { id: string; full_name: string | null; email: string | null }[];
   notOnboarded: { id: string; full_name: string | null; email: string | null }[];
+  modificationRequests: { id: string; memberId: string; memberName: string; body: string; status: string; created_at: string }[];
   nextMeeting: { id: string; title: string; theme: string | null; starts_at: string; hasAgenda: boolean; attending: number } | null;
   activity: { id: string; text: string; sub: string; when: string; kind: string }[];
 };
@@ -786,6 +791,32 @@ function StatTile({ label, value, icon: Icon, href, tone }: { label: string; val
   return href ? <Link href={href}>{inner}</Link> : inner;
 }
 
+function RequestAdminRow({ req }: { req: AdminOverview["modificationRequests"][number] }) {
+  const [pending, startTransition] = useTransition();
+  const act = (fn: () => Promise<{ ok: boolean; message?: string }>) =>
+    startTransition(async () => {
+      const r = await fn();
+      if (!r.ok) toast.error(r.message ?? "Failed.");
+    });
+  return (
+    <div className="rounded-lg border border-border p-3">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <p className="text-sm font-medium">{req.memberName}</p>
+        <Badge variant={req.status === "discussed" ? "default" : "secondary"} className="capitalize">{req.status}</Badge>
+      </div>
+      <p className="text-sm text-muted-foreground">{req.body}</p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {req.status !== "discussed" && (
+          <Button size="sm" variant="outline" className="h-7 text-xs" disabled={pending} onClick={() => act(() => setRequestStatus(req.id, "discussed"))}>Mark discussed</Button>
+        )}
+        <Button size="sm" variant="outline" className="h-7 text-xs" disabled={pending} onClick={() => act(() => setRequestStatus(req.id, "accepted"))}>Accept</Button>
+        <Button size="sm" variant="outline" className="h-7 text-xs" disabled={pending} onClick={() => act(() => setRequestStatus(req.id, "declined"))}>Decline</Button>
+        <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" disabled={pending} onClick={() => act(() => deleteRequest(req.id))}>Delete</Button>
+      </div>
+    </div>
+  );
+}
+
 function OverviewTab({ overview }: { overview: AdminOverview }) {
   const s = overview.stats;
   return (
@@ -800,6 +831,8 @@ function OverviewTab({ overview }: { overview: AdminOverview }) {
         <StatTile label="Overdue goals" value={s.overdueGoals} icon={AlertTriangle} tone="warn" />
         <StatTile label="Suspended" value={s.suspendedMembers} icon={UsersIcon} tone="warn" />
         <StatTile label="Not set up" value={s.notOnboarded} icon={KeyRound} tone="warn" />
+        <StatTile label="Constitution signed" value={s.constitutionSigned} icon={ScrollText} href="/constitution" />
+        <StatTile label="Change requests" value={s.openRequests} icon={MessageSquare} href="/constitution" tone="warn" />
         <StatTile label="Gallery photos" value={s.photos} icon={ImageIcon} href="/gallery" />
         <StatTile label="Books & podcasts" value={s.books} icon={BookOpen} href="/books" />
         <StatTile label="Documents" value={s.documents} icon={FolderOpen} href="/documents" />
@@ -861,6 +894,17 @@ function OverviewTab({ overview }: { overview: AdminOverview }) {
               </div>
             )}
 
+            {overview.modificationRequests.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Constitution change requests ({overview.modificationRequests.length})</p>
+                <div className="space-y-2">
+                  {overview.modificationRequests.map((r) => (
+                    <RequestAdminRow key={r.id} req={r} />
+                  ))}
+                </div>
+              </div>
+            )}
+
             {overview.needsHelp.length > 0 && (
               <div>
                 <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Members asking for help</p>
@@ -875,7 +919,7 @@ function OverviewTab({ overview }: { overview: AdminOverview }) {
               </div>
             )}
 
-            {overview.invitedMembers.length === 0 && overview.needsHelp.length === 0 && overview.notOnboarded.length === 0 && overview.nextMeeting && (
+            {overview.invitedMembers.length === 0 && overview.needsHelp.length === 0 && overview.notOnboarded.length === 0 && overview.modificationRequests.length === 0 && overview.nextMeeting && (
               <p className="text-sm text-muted-foreground">All caught up — nothing needs attention right now.</p>
             )}
           </CardContent>

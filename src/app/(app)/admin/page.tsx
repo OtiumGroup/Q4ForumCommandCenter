@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminPanel, type AdminOverview } from "./admin-panel";
+import { CONSTITUTION_VERSION } from "@/lib/constitution-content";
 
 function isUpcoming(iso: string) {
   return new Date(iso) >= new Date(new Date().toDateString());
@@ -30,6 +31,8 @@ export default async function AdminPage() {
     { count: documentsCount },
     { count: resourcesCount },
     { data: authStatus },
+    { data: conRequests },
+    { data: conSignatures },
   ] = await Promise.all([
     supabase.from("profiles").select("id, email, full_name, role, status, photo_url, created_at").order("created_at", { ascending: true }),
     supabase.from("invites").select("id, email, full_name, role, status, personal_note, created_at").order("created_at", { ascending: false }),
@@ -44,6 +47,8 @@ export default async function AdminPage() {
     supabase.from("documents").select("id", { count: "exact", head: true }),
     supabase.from("eo_resources").select("id", { count: "exact", head: true }),
     supabase.rpc("admin_member_auth_status"),
+    supabase.from("constitution_requests").select("id, member_id, body, status, created_at").order("created_at", { ascending: false }),
+    supabase.from("constitution_signatures").select("member_id").eq("version", CONSTITUTION_VERSION),
   ]);
 
   const setUp = new Set(
@@ -87,6 +92,19 @@ export default async function AdminPage() {
     .filter((m) => m.status !== "suspended" && !setUp.has(m.id))
     .map((m) => ({ id: m.id, full_name: m.full_name, email: m.email }));
 
+  const signedIds = new Set(((conSignatures as { member_id: string }[] | null) ?? []).map((s) => s.member_id));
+  const constitutionTotal = mem.filter((m) => m.status !== "suspended").length;
+  const constitutionSigned = mem.filter((m) => m.status !== "suspended" && signedIds.has(m.id)).length;
+  const openConRequests = ((conRequests as { id: string; member_id: string; body: string; status: string; created_at: string }[] | null) ?? []).filter((r) => r.status === "open" || r.status === "discussed");
+  const modificationRequests = openConRequests.map((r) => ({
+    id: r.id,
+    memberId: r.member_id,
+    memberName: nameById.get(r.member_id) ?? "A member",
+    body: r.body,
+    status: r.status,
+    created_at: r.created_at,
+  }));
+
   const eventAttending = new Map<string, number>();
   (eventRsvps ?? []).forEach((r) => {
     if (r.status === "attending") eventAttending.set(r.event_id, (eventAttending.get(r.event_id) ?? 0) + 1);
@@ -120,10 +138,14 @@ export default async function AdminPage() {
       resources: resourcesCount ?? 0,
       onboarded: mem.filter((m) => setUp.has(m.id)).length,
       notOnboarded: notOnboarded.length,
+      constitutionSigned,
+      constitutionTotal,
+      openRequests: openConRequests.length,
     },
     needsHelp,
     invitedMembers,
     notOnboarded,
+    modificationRequests,
     nextMeeting,
     activity,
   };
