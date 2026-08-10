@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, Pencil, MapPin, Heart, Star, Briefcase,
   Award, Cake, Phone, Building2, ExternalLink, Home,
+  Linkedin, Instagram, Facebook,
 } from "lucide-react";
 
 function initials(name: string | null) {
@@ -19,6 +20,16 @@ function cityState(addr: string | null) {
 }
 function safeUrl(u?: string | null) {
   return u && /^https?:\/\//i.test(u) ? u : null;
+}
+function SocialLink({ href, icon: Icon, label }: { href?: string | null; icon: React.ElementType; label: string }) {
+  const safe = safeUrl(href);
+  if (!safe) return null;
+  return (
+    <a href={safe} target="_blank" rel="noreferrer" aria-label={label}
+       className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-accent hover:text-accent">
+      <Icon className="h-4 w-4" />
+    </a>
+  );
 }
 function formatBirthday(birthday: string | null) {
   if (!birthday) return null;
@@ -117,6 +128,14 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
             {profile.eo_member_since && <Chip><Award className="h-3.5 w-3.5" />EO member since {profile.eo_member_since}</Chip>}
             {formatBirthday(profile.birthday) && <Chip><Cake className="h-3.5 w-3.5" />{formatBirthday(profile.birthday)}</Chip>}
           </div>
+
+          {(profile.linkedin || profile.instagram || profile.facebook) && (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <SocialLink href={profile.linkedin} icon={Linkedin} label="LinkedIn" />
+              <SocialLink href={profile.instagram} icon={Instagram} label="Instagram" />
+              <SocialLink href={profile.facebook} icon={Facebook} label="Facebook" />
+            </div>
+          )}
 
           {(profile.education || profile.hometown || profile.eo_offices_held || profile.eo_member_since) && (
             <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">

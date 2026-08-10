@@ -40,6 +40,9 @@ type Profile = {
   sport_played: string | null;
   current_interests: string | null;
   websites: string[] | null;
+  linkedin: string | null;
+  instagram: string | null;
+  facebook: string | null;
   businesses: Business[] | null;
   eo_member_since: number | null;
   eo_offices_held: string | null;
@@ -341,8 +344,22 @@ export function BioEditForm({ profile, userId }: { profile: Profile; userId: str
             <CardDescription>Optional.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="linkedin">LinkedIn</Label>
+                <Input id="linkedin" name="linkedin" placeholder="URL or handle" defaultValue={profile?.linkedin ?? ""} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="instagram">Instagram</Label>
+                <Input id="instagram" name="instagram" placeholder="@handle" defaultValue={profile?.instagram ?? ""} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="facebook">Facebook</Label>
+                <Input id="facebook" name="facebook" placeholder="URL or handle" defaultValue={profile?.facebook ?? ""} />
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="websites">Websites</Label>
+              <Label htmlFor="websites">Other links</Label>
               <Textarea
                 id="websites"
                 name="websites"

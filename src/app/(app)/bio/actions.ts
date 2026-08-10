@@ -16,6 +16,13 @@ type BusinessEntry = {
 
 type KidEntry = { name: string; age?: string };
 
+function socialUrl(raw: FormDataEntryValue | null, base: string): string | null {
+  const v = String(raw ?? "").trim().replace(/^@+/, "");
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return v;
+  return base + v.replace(/^\/+/, "");
+}
+
 export async function updateBio(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -70,6 +77,9 @@ export async function updateBio(_prev: ActionResult, formData: FormData): Promis
       sport_played: String(formData.get("sport_played") || "").trim() || null,
       current_interests: String(formData.get("current_interests") || "").trim() || null,
       websites,
+      linkedin: socialUrl(formData.get("linkedin"), "https://www.linkedin.com/in/"),
+      instagram: socialUrl(formData.get("instagram"), "https://instagram.com/"),
+      facebook: socialUrl(formData.get("facebook"), "https://facebook.com/"),
       businesses,
       eo_member_since: Number.isNaN(eoMemberSince) ? null : eoMemberSince,
       eo_offices_held: String(formData.get("eo_offices_held") || "").trim() || null,
