@@ -37,6 +37,8 @@ import {
   revokeInvite,
   deleteMember,
   editMember,
+  sendWelcome,
+  sendWelcomeToAll,
   postBroadcast,
   deleteBroadcast,
 } from "./actions";
@@ -287,7 +289,10 @@ function UsersTab({ members, currentUserId }: { members: Member[]; currentUserId
           </CardTitle>
           <CardDescription>Everyone with access to the Command Center.</CardDescription>
         </div>
-        <InviteDialog />
+        <div className="flex flex-wrap items-center gap-2">
+          <SendWelcomeAllButton />
+          <InviteDialog />
+        </div>
       </CardHeader>
       <CardContent>
         <div className="relative mb-4">
@@ -406,9 +411,49 @@ function MeetingsTab({ meetings }: { meetings: AdminMeeting[] }) {
   );
 }
 
+function SendWelcomeAllButton() {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline"><Mail className="mr-1.5 h-4 w-4" /> Email everyone a welcome</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Send welcome emails to all members?</DialogTitle>
+          <DialogDescription>
+            Every active member gets a secure link to set their password and sign in — perfect for onboarding the forum for the first time. It&apos;s safe to run again later; existing members can just ignore it.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
+          <Button
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                const r = await sendWelcomeToAll();
+                if (r.ok) {
+                  toast.success(r.message ?? "Sent.");
+                  setOpen(false);
+                } else {
+                  toast.error(r.message ?? "Could not send.");
+                }
+              })
+            }
+          >
+            {pending ? "Sending…" : "Send to all"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function EditMemberDialog({ member, currentUserId }: { member: Member; currentUserId: string }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [welcomePending, startWelcome] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(formData: FormData) {
@@ -470,6 +515,24 @@ function EditMemberDialog({ member, currentUserId }: { member: Member; currentUs
               Suspended members keep their profile but can&apos;t sign in.
               {member.id === currentUserId && " You can't remove your own admin access."}
             </p>
+            {member.email && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                disabled={welcomePending}
+                onClick={() =>
+                  startWelcome(async () => {
+                    const r = await sendWelcome(member.email!);
+                    if (r.ok) toast.success(r.message ?? "Sent.");
+                    else toast.error(r.message ?? "Could not send.");
+                  })
+                }
+              >
+                <Mail className="mr-1.5 h-4 w-4" /> {welcomePending ? "Sending…" : "Send password-setup email"}
+              </Button>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
           <DialogFooter>

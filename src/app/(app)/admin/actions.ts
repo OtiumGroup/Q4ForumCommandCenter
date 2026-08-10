@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 type ActionResult = { ok: boolean; message?: string };
@@ -165,4 +166,40 @@ export async function editMember(
   revalidatePath("/admin");
   revalidatePath("/bio");
   return { ok: true, message: "Member updated." };
+}
+
+async function resetOrigin() {
+  const h = await headers();
+  const host = h.get("host");
+  return h.get("origin") ?? (host ? `https://${host}` : "");
+}
+
+export async function sendWelcome(email: string): Promise<ActionResult> {
+  const { supabase, isAdmin } = await requireAdmin();
+  if (!isAdmin) return { ok: false, message: "Admins only." };
+  const target = email.trim().toLowerCase();
+  if (!target) return { ok: false, message: "No email on file for this member." };
+  const origin = await resetOrigin();
+  const { error } = await supabase.auth.resetPasswordForEmail(target, {
+    redirectTo: origin ? `${origin}/reset` : undefined,
+  });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: `Welcome email sent to ${target}.` };
+}
+
+export async function sendWelcomeToAll(): Promise<ActionResult> {
+  const { supabase, isAdmin } = await requireAdmin();
+  if (!isAdmin) return { ok: false, message: "Admins only." };
+  const origin = await resetOrigin();
+  const redirectTo = origin ? `${origin}/reset` : undefined;
+
+  const { data: rows } = await supabase.from("profiles").select("email").eq("status", "active");
+  const emails = (rows ?? []).map((r) => r.email).filter((e): e is string => Boolean(e));
+
+  let sent = 0;
+  for (const email of emails) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (!error) sent++;
+  }
+  return { ok: true, message: `Welcome email sent to ${sent} member${sent === 1 ? "" : "s"}.` };
 }
