@@ -232,16 +232,9 @@ export function MeetingsPanel({
                     </a>
                   )}
                   {m.notes && <p className="mt-2 text-sm text-muted-foreground">{m.notes}</p>}
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <Link href={`/meetings/${m.id}`} className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
-                      View agenda &amp; schedule <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                    {isAdmin && (
-                      <Link href={`/meetings/${m.id}/edit`} className="inline-flex items-center gap-1 rounded-md border border-accent/40 bg-accent/10 px-2 py-1 text-xs font-medium text-accent transition-colors hover:bg-accent/20">
-                        <Pencil className="h-3 w-3" /> Edit agenda
-                      </Link>
-                    )}
-                  </div>
+                  <Link href={`/meetings/${m.id}`} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
+                    View agenda &amp; schedule <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
               </div>
               {isAdmin && (

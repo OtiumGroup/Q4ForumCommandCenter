@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Pencil, MapPin, CalendarClock, User } from "lucide-react";
+import { ArrowLeft, MapPin, CalendarClock, User } from "lucide-react";
 import { PrintButton } from "./print-button";
 import { MeetingRsvp } from "./meeting-rsvp";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -56,11 +56,6 @@ export default async function MeetingAgendaPage({ params }: { params: Promise<{ 
         </Button>
         <div className="flex gap-2">
           <PrintButton />
-          {isAdmin && (
-            <Button asChild size="sm">
-              <Link href={`/meetings/${id}/edit`}><Pencil className="mr-1.5 h-4 w-4" /> Edit agenda</Link>
-            </Button>
-          )}
         </div>
       </div>
 
@@ -108,7 +103,7 @@ export default async function MeetingAgendaPage({ params }: { params: Promise<{ 
           <h2 className="font-display text-xs font-semibold uppercase tracking-wide text-accent">Schedule</h2>
           {agenda.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">
-              No agenda posted yet{isAdmin ? " — click “Edit agenda” to build it." : ". Check back closer to the meeting."}
+              No agenda posted yet{isAdmin ? " — build it from Admin → Meetings." : ". Check back closer to the meeting."}
             </p>
           ) : (
             <ol className="mt-3">

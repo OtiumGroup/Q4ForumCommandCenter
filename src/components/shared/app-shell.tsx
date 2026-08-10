@@ -5,23 +5,11 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { NAV_GROUPS, NAV_ITEMS, ADMIN_NAV_ITEMS, SETTINGS_ITEM, type NavItem, type NavGroup } from "@/lib/nav";
+import { NAV_GROUPS, ADMIN_NAV_ITEMS, SETTINGS_ITEM, type NavItem, type NavGroup } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/login/actions";
 import { AccountMenu } from "@/components/shared/account-menu";
-
-function initials(name: string | null) {
-  if (!name) return "Q4";
-  return name
-    .split(" ")
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
 
 function BrandMark() {
   return (
@@ -105,8 +93,6 @@ export function AppShell({
 
   const manageItems = [...(isAdmin ? ADMIN_NAV_ITEMS : []), SETTINGS_ITEM];
   const groups: NavGroup[] = [...NAV_GROUPS, { label: "Manage", items: manageItems }];
-  const allItems = [...NAV_ITEMS, ...manageItems];
-  const currentItem = allItems.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
 
   return (
     <div className="flex min-h-svh w-full">
@@ -130,7 +116,7 @@ export function AppShell({
         </div>
       </aside>
 
-      <div className="flex min-h-svh flex-1 flex-col">
+      <div className="flex min-h-svh min-w-0 flex-1 flex-col">
         {/* Topbar */}
         <header className="sticky top-0 z-20 flex h-16 items-center border-b border-border bg-card/80 px-4 backdrop-blur-md lg:px-8 print:hidden">
           <div className="flex items-center gap-3 lg:hidden">
@@ -156,10 +142,10 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="flex flex-1 flex-col bg-background p-4 lg:p-8 print:p-0">
+        <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden bg-background p-4 lg:p-8 print:overflow-visible print:p-0">
           <div
             key={pathname}
-            className="flex flex-1 flex-col duration-500 ease-out animate-in fade-in slide-in-from-bottom-2"
+            className="flex min-w-0 flex-1 flex-col duration-500 ease-out animate-in fade-in slide-in-from-bottom-2"
           >
             {children}
           </div>

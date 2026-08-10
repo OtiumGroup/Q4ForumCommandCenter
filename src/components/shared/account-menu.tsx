@@ -25,7 +25,7 @@ export function AccountMenu({ fullName, photoUrl }: { fullName: string | null; p
             {photoUrl ? <AvatarImage src={photoUrl} alt={fullName ?? ""} /> : null}
             <AvatarFallback className="bg-secondary text-xs text-secondary-foreground">{initials(fullName)}</AvatarFallback>
           </Avatar>
-          <span className="hidden text-sm font-medium sm:inline">{fullName ?? "Member"}</span>
+          <span className="max-w-[42vw] truncate text-sm font-medium sm:max-w-none">{fullName ?? "Member"}</span>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>

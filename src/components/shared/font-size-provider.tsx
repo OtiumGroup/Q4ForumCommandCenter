@@ -2,9 +2,11 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-// Four accessibility steps. Changing the root font-size scales the whole
-// (rem-based) UI, so larger text sizes make every page easier to read.
-const SIZES = ["93.75%", "100%", "112.5%", "125%"];
+// Six accessibility steps, skewed larger for easy reading on phones. The
+// smallest step is the app's original baseline; every step above enlarges the
+// whole (rem-based) UI. Default sits one notch up so text is comfortable
+// out of the box for the whole forum.
+const SIZES = ["100%", "112.5%", "125%", "137.5%", "150%", "175%"];
 const STORAGE_KEY = "q4-font-scale";
 
 type FontSizeContextValue = { scale: number; setScale: (n: number) => void; steps: number };

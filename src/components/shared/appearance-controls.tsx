@@ -10,7 +10,7 @@ const THEMES = [
   { value: "dark", label: "Dark", Icon: Moon },
   { value: "system", label: "Auto", Icon: Monitor },
 ];
-const SIZE_LABELS = ["Small", "Medium", "Large", "Extra large"];
+const SIZE_LABELS = ["Small", "Medium", "Large", "Extra large", "Huge", "Maximum"];
 
 export function AppearanceControls() {
   const { theme, setTheme } = useTheme();

@@ -80,7 +80,6 @@ export async function otpStep(
 ): Promise<OtpStepState> {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const token = String(formData.get("token") || "").trim();
-  const next = String(formData.get("next") || "/home");
 
   if (!email || token.length < 6) {
     return { status: "error", message: "Enter the 6-digit code from your email." };
@@ -98,7 +97,8 @@ export async function otpStep(
     return { status: "error", message: "That code is incorrect or expired." };
   }
 
-  redirect(next.startsWith("/") ? next : "/home");
+  // Always land members on the home dashboard after signing in.
+  redirect("/home");
 }
 
 export async function resendOtp(email: string) {
