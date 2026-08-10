@@ -8,6 +8,7 @@ import {
   BookOpen,
   ScrollText,
   Target,
+  Images,
   LibraryBig,
   Settings,
   ShieldCheck,
@@ -34,6 +35,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/events", label: "Upcoming Events", icon: PartyPopper },
       { href: "/bio", label: "Member Bios", icon: UserCircle },
       { href: "/goals", label: "Goals & Accountability", icon: Target },
+      { href: "/gallery", label: "Photo Gallery", icon: Images },
     ],
   },
   {
