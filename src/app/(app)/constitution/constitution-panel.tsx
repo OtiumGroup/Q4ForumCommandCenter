@@ -309,7 +309,7 @@ export function ConstitutionPanel({
           <img src="/brand/q4-mark.png" alt="Q4" className="mx-auto mb-4 h-14 w-14 rounded-xl object-contain shadow-md" />
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Governing Document</p>
           <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight">{CONSTITUTION_TITLE}</h2>
-          <p className="mt-2 text-sm text-primary-foreground/70">{CONSTITUTION_REV} · Fiscal Year 2025–2026</p>
+          <p className="mt-2 text-sm text-primary-foreground/70">{CONSTITUTION_REV} · Fiscal Year 2026–2027</p>
         </div>
 
         <section>

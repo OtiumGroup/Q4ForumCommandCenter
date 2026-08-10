@@ -12,6 +12,7 @@ import {
   LibraryBig,
   Settings,
   ShieldCheck,
+  Award,
 } from "lucide-react";
 
 export type NavItem = {
@@ -35,6 +36,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/events", label: "Upcoming Events", icon: PartyPopper },
       { href: "/bio", label: "Member Bios", icon: UserCircle },
       { href: "/goals", label: "Goals & Accountability", icon: Target },
+      { href: "/positions", label: "Forum Positions", icon: Award },
       { href: "/gallery", label: "Photo Gallery", icon: Images },
     ],
   },

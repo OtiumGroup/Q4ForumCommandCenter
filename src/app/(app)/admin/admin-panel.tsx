@@ -45,6 +45,8 @@ import {
 } from "./actions";
 import { deleteEvent } from "@/app/(app)/events/actions";
 import { setRequestStatus, deleteRequest } from "@/app/(app)/constitution/actions";
+import { assignPosition } from "@/app/(app)/positions/actions";
+import { FORUM_POSITIONS } from "@/lib/constitution-content";
 
 type Member = {
   id: string;
@@ -1050,6 +1052,71 @@ function EventsTab({ events }: { events: AdminEvent[] }) {
   );
 }
 
+function PositionsTab({
+  members,
+  assignments,
+}: {
+  members: Member[];
+  assignments: { key: string; member_id: string | null }[];
+}) {
+  const [pending, startTransition] = useTransition();
+  const [byKey, setByKey] = useState<Record<string, string | null>>(() =>
+    Object.fromEntries(FORUM_POSITIONS.map((p) => [p.key, assignments.find((a) => a.key === p.key)?.member_id ?? null]))
+  );
+  const active = members.filter((m) => m.status !== "suspended");
+
+  function setAssign(key: string, memberId: string | null) {
+    const prev = byKey[key] ?? null;
+    setByKey((s) => ({ ...s, [key]: memberId }));
+    startTransition(async () => {
+      const res = await assignPosition(key, memberId);
+      if (res.ok) toast.success("Position updated.");
+      else {
+        setByKey((s) => ({ ...s, [key]: prev }));
+        toast.error(res.message ?? "Could not update.");
+      }
+    });
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">
+        Assign a member to each forum position. Everyone can see these on the Forum Positions page, but only you can change them.
+      </p>
+      {FORUM_POSITIONS.map((p) => {
+        const current = byKey[p.key];
+        return (
+          <div key={p.key} className="rounded-lg border border-border p-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">{p.name}</p>
+                <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{p.desc}</p>
+              </div>
+              <Select
+                value={current ?? "unassigned"}
+                onValueChange={(v) => setAssign(p.key, v === "unassigned" ? null : v)}
+                disabled={pending}
+              >
+                <SelectTrigger className="w-full sm:w-56">
+                  <SelectValue placeholder="Assign a member" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {active.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.full_name ?? "Member"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function AdminPanel({
   currentUserId,
   members,
@@ -1058,6 +1125,7 @@ export function AdminPanel({
   meetings,
   events,
   overview,
+  positionAssignments,
 }: {
   currentUserId: string;
   members: Member[];
@@ -1066,6 +1134,7 @@ export function AdminPanel({
   meetings: AdminMeeting[];
   events: AdminEvent[];
   overview: AdminOverview;
+  positionAssignments: { key: string; member_id: string | null }[];
 }) {
   return (
     <div className="flex flex-1 flex-col">
@@ -1079,6 +1148,7 @@ export function AdminPanel({
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="communications">Communications</TabsTrigger>
           <TabsTrigger value="invites">Invites</TabsTrigger>
+          <TabsTrigger value="positions">Positions</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4">
           <OverviewTab overview={overview} />
@@ -1097,6 +1167,10 @@ export function AdminPanel({
         </TabsContent>
         <TabsContent value="invites" className="mt-4">
           <InvitesTab invites={invites} />
+        </TabsContent>
+
+        <TabsContent value="positions" className="mt-4">
+          <PositionsTab members={members} assignments={positionAssignments} />
         </TabsContent>
       </Tabs>
     </div>

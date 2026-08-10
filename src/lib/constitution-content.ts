@@ -2,7 +2,7 @@
 // Faithful to "2025 Consitution.docx" (Rev 8.11.2025). Signatures are driven by
 // the live member list, so the roster stays current automatically.
 
-export const CONSTITUTION_VERSION = "2025-2026";
+export const CONSTITUTION_VERSION = "2026-2027";
 export const CONSTITUTION_REV = "Rev. 8/11/2025";
 export const CONSTITUTION_TITLE = "4th Quarter Forum Constitution";
 
@@ -19,8 +19,18 @@ export const FOUNDATION: { label: string; value: string }[] = [
   { label: "Vision", value: "To be known as the best EO Forum in the Fort Worth chapter." },
   { label: "Values", value: "Authenticity · Accountability · Trust · Growth · Excellence" },
   { label: "Group Size", value: "8 members" },
-  { label: "Fiscal Year", value: "July 1, 2025 – June 30, 2026, in accordance with EO's calendar." },
-  { label: "Position Terms", value: "July 1, 2025 – June 30, 2026." },
+  { label: "Fiscal Year", value: "July 1, 2026 – June 30, 2027, in accordance with EO's calendar." },
+  { label: "Position Terms", value: "July 1, 2026 – June 30, 2027." },
+];
+
+export const FORUM_POSITIONS: { key: string; name: string; desc: string }[] = [
+  { key: "moderator", name: "Moderator", desc: "Facilitates group communication and meetings based on EO's Moderator Training." },
+  { key: "moderator_elect", name: "Moderator-Elect", desc: "Assists the Moderator with Forum business and serves as a backup." },
+  { key: "accountability", name: "Accountability", desc: "Serves as timekeeper for meeting agendas \u2014 a visual or audible (\u2018knock\u2019) cue to keep the group on track \u2014 and enforces the Forum Constitution and fines." },
+  { key: "connection", name: "Connection", desc: "Plans social interactions and promotes chapter involvement for Forum members outside of monthly meetings." },
+  { key: "finance", name: "Finance", desc: "Records fines, retreat costs, meal expenses, and related payments." },
+  { key: "coaching", name: "Coaching", desc: "Manages the parking lot for \u201CDeep Dive\u201D open-coaching, and coordinates presentations with third-party subject-matter experts & EO SAPs." },
+  { key: "retreat_experience", name: "Retreat Experience", desc: "Plans the annual retreat event and logistics to create memorable experiences." },
 ];
 
 export const SECTIONS: ConSection[] = [
@@ -42,15 +52,7 @@ export const SECTIONS: ConSection[] = [
       {
         kind: "roles",
         intro: "All positions have a one-year term that coincides with the fiscal year. Positions should be assigned by the first Forum meeting of the new fiscal year.",
-        roles: [
-          { name: "Moderator", desc: "Facilitates group communication and meetings based on EO's Moderator Training." },
-          { name: "Moderator-Elect", desc: "Assists the Moderator with Forum business and serves as a backup." },
-          { name: "Accountability", desc: "Serves as timekeeper for meeting agendas \u2014 a visual or audible (\u2018knock\u2019) cue to keep the group on track \u2014 and enforces the Forum Constitution and fines." },
-          { name: "Connection", desc: "Plans social interactions and promotes chapter involvement for Forum members outside of monthly meetings." },
-          { name: "Finance", desc: "Records fines, retreat costs, meal expenses, and related payments." },
-          { name: "Coaching", desc: "Manages the parking lot for \u201CDeep Dive\u201D open-coaching, and coordinates presentations with third-party subject-matter experts & EO SAPs." },
-          { name: "Retreat Experience", desc: "Plans the annual retreat event and logistics to create memorable experiences." },
-        ],
+        roles: FORUM_POSITIONS.map((p) => ({ name: p.name, desc: p.desc }))
       },
       {
         kind: "definition",

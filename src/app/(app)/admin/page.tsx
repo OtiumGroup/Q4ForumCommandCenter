@@ -33,6 +33,7 @@ export default async function AdminPage() {
     { data: authStatus },
     { data: conRequests },
     { data: conSignatures },
+    { data: positionRows },
   ] = await Promise.all([
     supabase.from("profiles").select("id, email, full_name, role, status, photo_url, created_at").order("created_at", { ascending: true }),
     supabase.from("invites").select("id, email, full_name, role, status, personal_note, created_at").order("created_at", { ascending: false }),
@@ -49,6 +50,7 @@ export default async function AdminPage() {
     supabase.rpc("admin_member_auth_status"),
     supabase.from("constitution_requests").select("id, member_id, body, status, created_at").order("created_at", { ascending: false }),
     supabase.from("constitution_signatures").select("member_id").eq("version", CONSTITUTION_VERSION),
+    supabase.from("forum_positions").select("key, member_id"),
   ]);
 
   const setUp = new Set(
@@ -168,6 +170,7 @@ export default async function AdminPage() {
       meetings={meetings ?? []}
       events={eventsForAdmin}
       overview={overview}
+      positionAssignments={(positionRows as { key: string; member_id: string | null }[] | null) ?? []}
     />
   );
 }
