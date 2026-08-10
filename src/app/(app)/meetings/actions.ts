@@ -138,3 +138,24 @@ export async function saveAgenda(
   revalidatePath("/meetings");
   return { ok: true, message: "Agenda saved." };
 }
+
+export async function setMeetingRsvp(meetingId: string, status: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "You must be signed in." };
+  if (!["attending", "interested", "not_attending"].includes(status)) {
+    return { ok: false, message: "Invalid status." };
+  }
+
+  const { error } = await supabase
+    .from("meeting_rsvps")
+    .upsert({ meeting_id: meetingId, member_id: user.id, status, updated_at: new Date().toISOString() });
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/meetings/${meetingId}`);
+  revalidatePath("/meetings");
+  return { ok: true };
+}

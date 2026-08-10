@@ -4,6 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil, MapPin, CalendarClock, User } from "lucide-react";
 import { PrintButton } from "./print-button";
+import { MeetingRsvp } from "./meeting-rsvp";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+function initials(name: string | null) {
+  if (!name) return "?";
+  return name.split(" ").map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+}
 
 type Block = { time?: string; title: string; speaker?: string; detail?: string };
 
@@ -21,14 +28,22 @@ export default async function MeetingAgendaPage({ params }: { params: Promise<{ 
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: meeting }, { data: me }] = await Promise.all([
+  const [{ data: meeting }, { data: me }, { data: rsvps }, { data: profiles }] = await Promise.all([
     supabase.from("meetings").select("*").eq("id", id).single(),
     supabase.from("profiles").select("role").eq("id", user?.id ?? "").single(),
+    supabase.from("meeting_rsvps").select("member_id, status").eq("meeting_id", id),
+    supabase.from("profiles").select("id, full_name, photo_url"),
   ]);
 
   if (!meeting) notFound();
   const isAdmin = me?.role === "admin";
   const agenda = (Array.isArray(meeting.agenda) ? meeting.agenda : []) as Block[];
+  const myStatus = (rsvps ?? []).find((r) => r.member_id === user?.id)?.status ?? null;
+  const pmap = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const attendees = (rsvps ?? [])
+    .filter((r) => r.status === "attending")
+    .map((r) => pmap.get(r.member_id))
+    .filter((p): p is { id: string; full_name: string | null; photo_url: string | null } => Boolean(p));
   const timeStr = meeting.ends_at
     ? `${fmtTime(meeting.starts_at)} – ${fmtTime(meeting.ends_at)}`
     : fmtTime(meeting.starts_at);
@@ -66,6 +81,28 @@ export default async function MeetingAgendaPage({ params }: { params: Promise<{ 
         </div>
 
         {meeting.notes && <p className="mt-4 border-l-2 border-accent/40 pl-3 text-sm text-muted-foreground">{meeting.notes}</p>}
+
+        <div className="mt-6 border-t border-border pt-5">
+          <h2 className="font-display text-xs font-semibold uppercase tracking-wide text-accent">Who&apos;s coming</h2>
+          <div className="mt-3 print:hidden">
+            <MeetingRsvp meetingId={id} myStatus={myStatus} />
+          </div>
+          {attendees.length > 0 ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {attendees.map((p) => (
+                <div key={p.id} className="flex items-center gap-1.5 rounded-full border border-border bg-card py-1 pl-1 pr-2.5">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={p.photo_url ?? undefined} alt="" />
+                    <AvatarFallback className="bg-secondary text-[9px] text-secondary-foreground">{initials(p.full_name)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs font-medium">{p.full_name}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-muted-foreground">No RSVPs yet.</p>
+          )}
+        </div>
 
         <div className="mt-7">
           <h2 className="font-display text-xs font-semibold uppercase tracking-wide text-accent">Schedule</h2>
