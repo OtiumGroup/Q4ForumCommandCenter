@@ -131,3 +131,38 @@ export async function deleteBroadcast(id: string): Promise<ActionResult> {
   revalidatePath("/home");
   return { ok: true };
 }
+
+export async function editMember(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const { supabase, isAdmin } = await requireAdmin();
+  if (!isAdmin) return { ok: false, message: "Admins only." };
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const id = String(formData.get("id") || "");
+  if (!id) return { ok: false, message: "Missing member id." };
+
+  const fullName = String(formData.get("full_name") || "").trim() || null;
+  const role = formData.get("role") === "admin" ? "admin" : "member";
+  const statusRaw = String(formData.get("status") || "active");
+  const status = ["active", "suspended", "invited"].includes(statusRaw) ? statusRaw : "active";
+
+  if (id === user?.id && role !== "admin") {
+    return { ok: false, message: "You can't remove your own admin access." };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ full_name: fullName, role, status })
+    .eq("id", id);
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/admin");
+  revalidatePath("/bio");
+  return { ok: true, message: "Member updated." };
+}

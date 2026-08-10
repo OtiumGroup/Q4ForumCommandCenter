@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
-import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock } from "lucide-react";
+import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,7 @@ import {
   resendInvite,
   revokeInvite,
   deleteMember,
+  editMember,
   postBroadcast,
   deleteBroadcast,
 } from "./actions";
@@ -282,10 +283,11 @@ function UsersTab({ members, currentUserId }: { members: Member[]; currentUserId
                     <p className="text-sm text-muted-foreground">{m.email ?? "—"}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <Badge variant={statusVariant(m.status)} className="capitalize">
                     {m.status}
                   </Badge>
+                  <EditMemberDialog member={m} currentUserId={currentUserId} />
                   {m.id !== currentUserId && <DeleteMemberButton member={m} />}
                 </div>
               </li>
@@ -294,6 +296,82 @@ function UsersTab({ members, currentUserId }: { members: Member[]; currentUserId
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function EditMemberDialog({ member, currentUserId }: { member: Member; currentUserId: string }) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function handleSubmit(formData: FormData) {
+    setError(null);
+    startTransition(async () => {
+      const res = await editMember({ ok: false }, formData);
+      if (res.ok) {
+        toast.success(res.message ?? "Member updated.");
+        setOpen(false);
+      } else {
+        setError(res.message ?? "Something went wrong.");
+      }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setError(null); }}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label={`Edit ${member.full_name ?? member.email ?? "member"}`}>
+          <Pencil className="h-4 w-4 text-muted-foreground" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <form action={handleSubmit}>
+          <input type="hidden" name="id" value={member.id} />
+          <DialogHeader>
+            <DialogTitle>Edit member</DialogTitle>
+            <DialogDescription>{member.email ?? "Manage this member's name, role, and access."}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit_full_name">Name</Label>
+              <Input id="edit_full_name" name="full_name" defaultValue={member.full_name ?? ""} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="edit_role">Role</Label>
+                <Select name="role" defaultValue={member.role}>
+                  <SelectTrigger id="edit_role" className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_status">Status</Label>
+                <Select name="status" defaultValue={member.status}>
+                  <SelectTrigger id="edit_status" className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="invited">Invited</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Suspended members keep their profile but can&apos;t sign in.
+              {member.id === currentUserId && " You can't remove your own admin access."}
+            </p>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button type="button" variant="ghost">Cancel</Button></DialogClose>
+            <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
