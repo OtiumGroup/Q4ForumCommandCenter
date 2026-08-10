@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { splitUpcoming, nextBirthdayWithin } from "@/lib/time";
-import { Bell, Cake, CalendarDays, MapPin, PartyPopper, Users, ArrowRight } from "lucide-react";
+import { Bell, Cake, CalendarDays, MapPin, PartyPopper, Users, ArrowRight, HandHeart } from "lucide-react";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -23,7 +23,7 @@ export default async function HomePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [{ data: profile }, { data: broadcasts }, { data: meetings }, { data: events }, { data: birthdayProfiles }, { data: members }] =
+  const [{ data: profile }, { data: broadcasts }, { data: meetings }, { data: events }, { data: birthdayProfiles }, { data: members }, { data: helpGoals }] =
     await Promise.all([
       supabase.from("profiles").select("full_name").eq("id", user?.id ?? "").single(),
       supabase.from("broadcasts").select("id, title, body, created_at").order("created_at", { ascending: false }).limit(5),
@@ -31,6 +31,7 @@ export default async function HomePage() {
       supabase.from("events").select("id, title, starts_at, address, notify_forum, created_at").order("starts_at", { ascending: true }),
       supabase.from("profiles").select("id, full_name, birthday").not("birthday", "is", null),
       supabase.from("profiles").select("id, full_name, photo_url").order("full_name", { ascending: true, nullsFirst: false }),
+      supabase.from("goals").select("id, member_id, title").eq("needs_help", true).neq("status", "done"),
     ]);
 
   const firstName = profile?.full_name?.split(" ")[0];
@@ -63,6 +64,11 @@ export default async function HomePage() {
 
   const nextItem = nextUp[0];
   const memberList = (members ?? []).filter((m) => m.full_name);
+  const memberMap = new Map((members ?? []).map((m) => [m.id, m]));
+  const needHelp = (helpGoals ?? [])
+    .map((g) => ({ id: g.id, title: g.title, member: memberMap.get(g.member_id) }))
+    .filter((h): h is { id: string; title: string; member: { id: string; full_name: string | null; photo_url: string | null } } => Boolean(h.member))
+    .slice(0, 5);
   const nextMeeting = upcomingMeetings[0] ?? null;
 
   return (
@@ -96,6 +102,38 @@ export default async function HomePage() {
         <StatCard label="Next meeting" value={nextMeeting ? formatDate(nextMeeting.starts_at) : "—"} />
         <StatCard label="Birthdays · 60 days" value={upcomingBirthdays.length} />
       </div>
+
+      {/* Lend a hand */}
+      {needHelp.length > 0 && (
+        <div className="rounded-2xl border border-accent/30 bg-accent/5 p-5">
+          <div className="mb-1 flex items-center gap-2">
+            <HandHeart className="h-[18px] w-[18px] text-accent" />
+            <h2 className="font-display text-[15px] font-semibold text-foreground">Lend a hand</h2>
+          </div>
+          <p className="mb-4 text-sm text-muted-foreground">Members who asked for help on a goal — reach out and check in on them.</p>
+          <ul className="space-y-3">
+            {needHelp.map((h) => (
+              <li key={h.id} className="flex items-center gap-3">
+                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-border">
+                  {h.member.photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={h.member.photo_url} alt={h.member.full_name ?? ""} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-primary text-xs font-medium text-primary-foreground">{initials(h.member.full_name)}</div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{h.member.full_name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{h.title}</p>
+                </div>
+                <Link href={`/bio/${h.member.id}`} className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-accent hover:underline">
+                  Reach out <ArrowRight className="h-3 w-3" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* The forum */}
       {memberList.length > 0 && (

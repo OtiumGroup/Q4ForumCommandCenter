@@ -177,10 +177,10 @@ export function MeetingsPanel({
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-accent">
-              <CalendarClock className="h-3.5 w-3.5" /> Upcoming Meetings
+              <CalendarClock className="h-3.5 w-3.5" /> EO Fort Worth · Q4 Forum
             </p>
             <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-              {next ? next.title : "No meetings scheduled"}
+              Upcoming Meetings
             </h1>
             {next && (
               <p className="mt-2 text-sm text-muted-foreground">
