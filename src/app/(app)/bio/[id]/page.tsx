@@ -7,6 +7,7 @@ import {
   ArrowLeft, Pencil, MapPin, Heart, Star, Briefcase,
   Award, Cake, Phone, Building2, ExternalLink, Home,
 } from "lucide-react";
+import { AddressLink } from "@/components/shared/address-link";
 
 function initials(name: string | null) {
   if (!name) return "?";
@@ -233,7 +234,7 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
         {(websites.length > 0 || profile.home_address) && (
           <SectionCard icon={Home} title="Details" className="sm:col-span-2">
             <div className="space-y-2 text-[15px]">
-              {profile.home_address && <p className="flex items-start gap-1.5 text-muted-foreground"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />{profile.home_address}</p>}
+              {profile.home_address && <AddressLink address={profile.home_address} className="text-muted-foreground hover:text-foreground" />}
               {websites.length > 0 && (
                 <div className="flex flex-wrap gap-3">
                   {websites.filter((w) => safeUrl(w)).map((w) => <a key={w} href={w} target="_blank" rel="noreferrer" className="text-accent underline-offset-2 hover:underline">{w}</a>)}

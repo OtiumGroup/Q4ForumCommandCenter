@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { splitUpcoming, nextBirthdayWithin } from "@/lib/time";
-import { Bell, Cake, CalendarDays, MapPin, PartyPopper, Users, ArrowRight, HandHeart } from "lucide-react";
+import { Bell, Cake, CalendarDays, PartyPopper, Users, ArrowRight, HandHeart } from "lucide-react";
+import { AddressLink } from "@/components/shared/address-link";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -196,7 +197,7 @@ export default async function HomePage() {
                     <Link href={item.type === "meeting" ? "/meetings" : item.type === "event" ? "/events" : `/bio/${item.id}`} className="block rounded-xl border border-border bg-secondary/40 p-3 transition-colors hover:bg-secondary/70">
                       <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">{item.type === "birthday" && <Cake className="h-3.5 w-3.5 text-accent" />}{item.title}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">{formatDate(item.starts_at)}</p>
-                      {item.location && <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="mt-0.5 h-3 w-3 shrink-0" /> {item.location}</p>}
+                      {item.location && <div className="mt-1"><AddressLink address={item.location} className="text-xs text-muted-foreground hover:text-foreground" iconClassName="h-3 w-3" /></div>}
                     </Link>
                   </li>
                 ))}

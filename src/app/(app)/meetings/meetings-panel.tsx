@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { CalendarClock, MapPin, Plus, Trash2, Pencil, ChevronDown, ArrowRight } from "lucide-react";
+import { CalendarClock, Plus, Trash2, Pencil, ChevronDown, ArrowRight } from "lucide-react";
+import { AddressLink } from "@/components/shared/address-link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -149,10 +150,6 @@ function DateBlock({ iso }: { iso: string }) {
   );
 }
 
-function locationHref(location: string) {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
-}
-
 export function MeetingsPanel({
   upcoming,
   past,
@@ -222,14 +219,7 @@ export function MeetingsPanel({
                     {formatTimeRange(m.starts_at, m.ends_at)}
                   </p>
                   {m.location && (
-                    <a
-                      href={locationHref(m.location)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-1 flex items-center gap-1 text-sm text-accent underline-offset-2 hover:underline"
-                    >
-                      <MapPin className="h-3.5 w-3.5" /> {m.location}
-                    </a>
+                    <AddressLink address={m.location} className="mt-1 text-sm text-accent" iconClassName="mt-0.5 h-3.5 w-3.5" />
                   )}
                   {m.notes && <p className="mt-2 text-sm text-muted-foreground">{m.notes}</p>}
                   <Link href={`/meetings/${m.id}`} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">

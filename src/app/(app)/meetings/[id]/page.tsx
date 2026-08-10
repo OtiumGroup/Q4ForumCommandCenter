@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, CalendarClock, User } from "lucide-react";
+import { ArrowLeft, CalendarClock, User } from "lucide-react";
+import { AddressLink } from "@/components/shared/address-link";
 import { PrintButton } from "./print-button";
 import { MeetingRsvp } from "./meeting-rsvp";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -71,7 +72,7 @@ export default async function MeetingAgendaPage({ params }: { params: Promise<{ 
 
         <div className="mt-5 grid gap-2.5 text-sm sm:grid-cols-2">
           <p className="flex items-center gap-2 text-foreground"><CalendarClock className="h-4 w-4 shrink-0 text-accent" /> {fmtDate(meeting.starts_at)} · {timeStr}</p>
-          {meeting.location && <p className="flex items-center gap-2 text-foreground"><MapPin className="h-4 w-4 shrink-0 text-accent" /> {meeting.location}</p>}
+          {meeting.location && <AddressLink address={meeting.location} className="text-foreground" iconClassName="mt-0 h-4 w-4 text-accent" />}
           {meeting.facilitator && <p className="flex items-center gap-2 text-foreground"><User className="h-4 w-4 shrink-0 text-accent" /> Facilitated by {meeting.facilitator}</p>}
         </div>
 

@@ -4,7 +4,6 @@ import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   CalendarPlus,
-  MapPin,
   Link as LinkIcon,
   Trash2,
   Check,
@@ -41,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { createEvent, deleteEvent, setRsvp } from "./actions";
+import { AddressLink } from "@/components/shared/address-link";
 
 type EventRow = {
   id: string;
@@ -309,9 +309,7 @@ function EventCard({
             {formatRange(event.starts_at, event.ends_at)}
           </p>
           {event.address && (
-            <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {event.address}
-            </p>
+            <AddressLink address={event.address} className="text-sm text-muted-foreground hover:text-foreground" />
           )}
           {event.link && (
             <a
