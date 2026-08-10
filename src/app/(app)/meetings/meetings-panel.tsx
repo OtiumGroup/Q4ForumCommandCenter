@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { CalendarClock, MapPin, Plus, Trash2, Pencil, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { CalendarClock, MapPin, Plus, Trash2, Pencil, ChevronDown, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -231,6 +232,9 @@ export function MeetingsPanel({
                     </a>
                   )}
                   {m.notes && <p className="mt-2 text-sm text-muted-foreground">{m.notes}</p>}
+                  <Link href={`/meetings/${m.id}`} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
+                    View agenda &amp; schedule <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
               </div>
               {isAdmin && (

@@ -61,8 +61,8 @@ function NavItemLink({ item, pathname, onNavigate }: { item: NavItem; pathname: 
         className={cn(
           "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-all duration-200",
           active
-            ? "border-accent/30 bg-accent/15 text-accent shadow-[0_1px_2px_rgba(38,35,29,0.08)]"
-            : "border-border/50 bg-secondary/40 text-sidebar-foreground/55 group-hover:border-accent/30 group-hover:bg-accent/10 group-hover:text-accent"
+            ? "border-accent/40 bg-accent/20 text-accent shadow-[0_1px_2px_rgba(38,35,29,0.12)]"
+            : "border-border bg-card text-accent/75 shadow-[0_1px_1px_rgba(38,35,29,0.05)] group-hover:border-accent/40 group-hover:bg-accent/15 group-hover:text-accent"
         )}
       >
         <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
@@ -111,7 +111,7 @@ export function AppShell({
   return (
     <div className="flex min-h-svh w-full">
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex print:hidden">
         <div className="px-5 py-6">
           <BrandMark />
         </div>
@@ -132,7 +132,7 @@ export function AppShell({
 
       <div className="flex min-h-svh flex-1 flex-col">
         {/* Topbar */}
-        <header className="sticky top-0 z-20 flex h-16 items-center border-b border-border bg-card/80 px-4 backdrop-blur-md lg:px-8">
+        <header className="sticky top-0 z-20 flex h-16 items-center border-b border-border bg-card/80 px-4 backdrop-blur-md lg:px-8 print:hidden">
           <div className="flex items-center gap-3 lg:hidden">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
@@ -156,7 +156,7 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="flex flex-1 flex-col bg-background p-4 lg:p-8">
+        <main className="flex flex-1 flex-col bg-background p-4 lg:p-8 print:p-0">
           <div
             key={pathname}
             className="flex flex-1 flex-col duration-500 ease-out animate-in fade-in slide-in-from-bottom-2"

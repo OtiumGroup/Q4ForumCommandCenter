@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 type ActionResult = { ok: boolean; message?: string };
+export type AgendaBlock = { time?: string; title: string; speaker?: string; detail?: string };
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -101,4 +102,39 @@ export async function deleteMeeting(id: string): Promise<ActionResult> {
 
   revalidatePath("/meetings");
   return { ok: true };
+}
+
+export async function saveAgenda(
+  meetingId: string,
+  data: { theme: string; facilitator: string; location: string; notes: string; agenda: AgendaBlock[] }
+): Promise<ActionResult> {
+  const { supabase, isAdmin } = await requireAdmin();
+  if (!isAdmin) return { ok: false, message: "Only admins can edit the agenda." };
+
+  const agenda = (data.agenda || [])
+    .filter((b) => (b.title ?? "").trim())
+    .map((b) => ({
+      time: (b.time ?? "").trim() || undefined,
+      title: b.title.trim(),
+      speaker: (b.speaker ?? "").trim() || undefined,
+      detail: (b.detail ?? "").trim() || undefined,
+    }));
+
+  const { error } = await supabase
+    .from("meetings")
+    .update({
+      theme: data.theme?.trim() || null,
+      facilitator: data.facilitator?.trim() || null,
+      location: data.location?.trim() || null,
+      notes: data.notes?.trim() || null,
+      agenda,
+    })
+    .eq("id", meetingId);
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/meetings/${meetingId}`);
+  revalidatePath(`/meetings/${meetingId}/edit`);
+  revalidatePath("/meetings");
+  return { ok: true, message: "Agenda saved." };
 }
