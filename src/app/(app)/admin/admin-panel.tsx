@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useFormStatus } from "react-dom";
-import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock, Pencil, CalendarClock } from "lucide-react";
+import { UserPlus, Trash2, RefreshCw, Megaphone, Users as UsersIcon, Mail, UserCheck, Clock, Pencil, CalendarClock, PartyPopper, Target, HandHeart, AlertTriangle, Image as ImageIcon, Activity, ArrowRight, BookOpen, FolderOpen, LibraryBig, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +40,7 @@ import {
   postBroadcast,
   deleteBroadcast,
 } from "./actions";
+import { deleteEvent } from "@/app/(app)/events/actions";
 
 type Member = {
   id: string;
@@ -67,6 +68,30 @@ type Broadcast = {
   body: string;
   created_at: string;
 };
+
+export type AdminOverview = {
+  stats: {
+    activeMembers: number;
+    suspendedMembers: number;
+    invitedMembers: number;
+    pendingInvites: number;
+    upcomingMeetings: number;
+    upcomingEvents: number;
+    totalGoals: number;
+    needsHelp: number;
+    overdueGoals: number;
+    photos: number;
+    books: number;
+    documents: number;
+    resources: number;
+  };
+  needsHelp: { goalId: string; title: string; memberId: string; memberName: string }[];
+  invitedMembers: { id: string; full_name: string | null; email: string | null }[];
+  nextMeeting: { id: string; title: string; theme: string | null; starts_at: string; hasAgenda: boolean; attending: number } | null;
+  activity: { id: string; text: string; sub: string; when: string; kind: string }[];
+};
+
+type AdminEvent = { id: string; title: string; source: "eo" | "member"; starts_at: string; address: string | null; attending: number };
 
 function statusVariant(status: string) {
   if (status === "active" || status === "accepted") return "default" as const;
@@ -247,6 +272,12 @@ function AlertConfirm({
 }
 
 function UsersTab({ members, currentUserId }: { members: Member[]; currentUserId: string }) {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return members;
+    return members.filter((m) => (m.full_name ?? "").toLowerCase().includes(q) || (m.email ?? "").toLowerCase().includes(q));
+  }, [members, query]);
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -259,11 +290,15 @@ function UsersTab({ members, currentUserId }: { members: Member[]; currentUserId
         <InviteDialog />
       </CardHeader>
       <CardContent>
-        {members.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">No members yet.</p>
+        <div className="relative mb-4">
+          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search members…" className="pl-8" />
+        </div>
+        {filtered.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">{members.length === 0 ? "No members yet." : "No members match your search."}</p>
         ) : (
           <ul className="divide-y divide-border">
-            {members.map((m) => (
+            {filtered.map((m) => (
               <li key={m.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
@@ -624,74 +659,293 @@ function CommunicationsTab({ broadcasts }: { broadcasts: Broadcast[] }) {
   );
 }
 
+function timeAgo(iso: string) {
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+const ACTIVITY_ICON: Record<string, typeof UserPlus> = {
+  member: UserPlus,
+  goal: Target,
+  event: PartyPopper,
+  photo: ImageIcon,
+  broadcast: Megaphone,
+};
+
+function StatTile({ label, value, icon: Icon, href, tone }: { label: string; value: number; icon: typeof UserPlus; href?: string; tone?: "warn" }) {
+  const inner = (
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-secondary/40">
+      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone === "warn" && value > 0 ? "bg-destructive/10 text-destructive" : "bg-secondary text-accent"}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div>
+        <p className="font-display text-xl font-semibold leading-none">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </div>
+    </div>
+  );
+  return href ? <Link href={href}>{inner}</Link> : inner;
+}
+
+function OverviewTab({ overview }: { overview: AdminOverview }) {
+  const s = overview.stats;
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile label="Active members" value={s.activeMembers} icon={UserCheck} />
+        <StatTile label="Pending invites" value={s.pendingInvites} icon={Clock} />
+        <StatTile label="Upcoming meetings" value={s.upcomingMeetings} icon={CalendarClock} href="/meetings" />
+        <StatTile label="Upcoming events" value={s.upcomingEvents} icon={PartyPopper} href="/events" />
+        <StatTile label="Goals" value={s.totalGoals} icon={Target} href="/goals" />
+        <StatTile label="Needs help" value={s.needsHelp} icon={HandHeart} href="/goals" tone="warn" />
+        <StatTile label="Overdue goals" value={s.overdueGoals} icon={AlertTriangle} tone="warn" />
+        <StatTile label="Suspended" value={s.suspendedMembers} icon={UsersIcon} tone="warn" />
+        <StatTile label="Gallery photos" value={s.photos} icon={ImageIcon} href="/gallery" />
+        <StatTile label="Books & podcasts" value={s.books} icon={BookOpen} href="/books" />
+        <StatTile label="Documents" value={s.documents} icon={FolderOpen} href="/documents" />
+        <StatTile label="EO resources" value={s.resources} icon={LibraryBig} href="/resources" />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base"><AlertTriangle className="h-4 w-4 text-accent" /> Needs your attention</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {overview.nextMeeting ? (
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Next forum</p>
+                <p className="mt-0.5 font-medium">{overview.nextMeeting.theme || overview.nextMeeting.title}</p>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(overview.nextMeeting.starts_at).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                  {" · "}
+                  {overview.nextMeeting.attending} attending
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <Button asChild size="sm" variant={overview.nextMeeting.hasAgenda ? "outline" : "default"}>
+                    <Link href={`/meetings/${overview.nextMeeting.id}/edit`}>{overview.nextMeeting.hasAgenda ? "Edit agenda" : "Build agenda"}</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="ghost"><Link href={`/meetings/${overview.nextMeeting.id}`}>View</Link></Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No upcoming meetings scheduled.</p>
+            )}
+
+            {overview.invitedMembers.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Invited, not yet active ({overview.invitedMembers.length})</p>
+                <ul className="space-y-1">
+                  {overview.invitedMembers.slice(0, 5).map((m) => (
+                    <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate">{m.full_name ?? m.email}</span>
+                      {m.email && <ResendInviteButton email={m.email} />}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {overview.needsHelp.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Members asking for help</p>
+                <ul className="space-y-1.5">
+                  {overview.needsHelp.map((g) => (
+                    <li key={g.goalId} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="min-w-0 truncate"><span className="font-medium">{g.memberName}</span> · {g.title}</span>
+                      <Link href={`/bio/${g.memberId}`} className="shrink-0 text-xs font-medium text-accent hover:underline">Reach out</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {overview.invitedMembers.length === 0 && overview.needsHelp.length === 0 && overview.nextMeeting && (
+              <p className="text-sm text-muted-foreground">All caught up — nothing needs attention right now.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base"><Activity className="h-4 w-4 text-accent" /> Recent activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {overview.activity.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nothing yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {overview.activity.map((a) => {
+                  const Icon = ACTIVITY_ICON[a.kind] ?? Activity;
+                  return (
+                    <li key={a.id} className="flex items-start gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-accent"><Icon className="h-3.5 w-3.5" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-foreground">{a.text}</p>
+                        <p className="truncate text-xs text-muted-foreground">{a.sub}</p>
+                      </div>
+                      <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(a.when)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function EventDeleteButton({ event }: { event: AdminEvent }) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label={`Delete ${event.title}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete event?</DialogTitle>
+          <DialogDescription>&quot;{event.title}&quot; will be removed for everyone.</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
+          <Button
+            variant="destructive"
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                const r = await deleteEvent(event.id);
+                if (r.ok) {
+                  toast.success("Event deleted.");
+                  setOpen(false);
+                } else {
+                  toast.error(r.message ?? "Could not delete.");
+                }
+              })
+            }
+          >
+            {pending ? "Deleting…" : "Delete"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EventsTab({ events }: { events: AdminEvent[] }) {
+  const now = new Date(new Date().toDateString());
+  const upcoming = events.filter((e) => new Date(e.starts_at) >= now);
+  const past = events.filter((e) => new Date(e.starts_at) < now);
+  const render = (list: AdminEvent[]) => (
+    <ul className="divide-y divide-border">
+      {list.map((e) => (
+        <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">{e.title}</p>
+              <Badge variant={e.source === "eo" ? "default" : "secondary"} className="text-[10px] uppercase">{e.source === "eo" ? "EO" : "Member"}</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {new Date(e.starts_at).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })} · {e.attending} attending
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm"><Link href="/events">Open</Link></Button>
+            <EventDeleteButton event={e} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base"><PartyPopper className="h-4 w-4 text-accent" /> Events ({events.length})</CardTitle>
+        <CardDescription>Every EO and member event. Add or edit details on the Events page; remove any here.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {events.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">No events yet.</p>
+        ) : (
+          <>
+            {upcoming.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Upcoming</p>
+                {render(upcoming)}
+              </div>
+            )}
+            {past.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Past</p>
+                {render(past)}
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function AdminPanel({
   currentUserId,
   members,
   invites,
   broadcasts,
   meetings,
+  events,
+  overview,
 }: {
   currentUserId: string;
   members: Member[];
   invites: Invite[];
   broadcasts: Broadcast[];
   meetings: AdminMeeting[];
+  events: AdminEvent[];
+  overview: AdminOverview;
 }) {
-  const activeMembers = members.filter((m) => m.status === "active").length;
-  const pendingInvites = invites.filter((i) => i.status === "pending").length;
-
   return (
     <div className="flex flex-1 flex-col">
       <div className="mb-6">
         <h1 className="font-display text-2xl font-semibold tracking-tight">Admin</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage members, invitations, and forum-wide communications.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Your forum command center — members, meetings, events, and communications.</p>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:max-w-md">
-        <Card>
-          <CardContent className="flex items-center gap-3 py-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-accent">
-              <UserCheck className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="font-display text-xl font-semibold leading-none">{activeMembers}</p>
-              <p className="text-xs text-muted-foreground">Active members</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 py-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-accent">
-              <Clock className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="font-display text-xl font-semibold leading-none">{pendingInvites}</p>
-              <p className="text-xs text-muted-foreground">Pending invites</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="users">
-        <TabsList>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="invites">Invites</TabsTrigger>
+      <Tabs defaultValue="overview">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="users">Members</TabsTrigger>
           <TabsTrigger value="meetings">Meetings</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="communications">Communications</TabsTrigger>
+          <TabsTrigger value="invites">Invites</TabsTrigger>
         </TabsList>
+        <TabsContent value="overview" className="mt-4">
+          <OverviewTab overview={overview} />
+        </TabsContent>
         <TabsContent value="users" className="mt-4">
           <UsersTab members={members} currentUserId={currentUserId} />
-        </TabsContent>
-        <TabsContent value="invites" className="mt-4">
-          <InvitesTab invites={invites} />
         </TabsContent>
         <TabsContent value="meetings" className="mt-4">
           <MeetingsTab meetings={meetings} />
         </TabsContent>
+        <TabsContent value="events" className="mt-4">
+          <EventsTab events={events} />
+        </TabsContent>
         <TabsContent value="communications" className="mt-4">
           <CommunicationsTab broadcasts={broadcasts} />
+        </TabsContent>
+        <TabsContent value="invites" className="mt-4">
+          <InvitesTab invites={invites} />
         </TabsContent>
       </Tabs>
     </div>
