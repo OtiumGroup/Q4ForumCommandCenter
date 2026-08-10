@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Plus, Target, HandHeart, Pencil, Trash2, Briefcase, Heart, Sparkles, AlertTriangle, ListChecks } from "lucide-react";
+import { Plus, Target, HandHeart, Pencil, Trash2, Briefcase, Heart, Sparkles, AlertTriangle, ListChecks, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import { saveGoal, setGoalStatus, deleteGoal } from "./actions";
+import { saveGoal, deleteGoal, nudgeGoal } from "./actions";
 
 type Area = "business" | "personal" | "life";
 type Status = "not_started" | "on_track" | "at_risk" | "done";
@@ -41,6 +41,7 @@ type Goal = {
   due_date: string | null;
   status: Status;
   needs_help: boolean;
+  reminder_date: string | null;
   created_at: string;
 };
 type ProfileLite = { id: string; full_name: string | null; photo_url: string | null };
@@ -145,6 +146,11 @@ function GoalDialog({ goal, trigger }: { goal?: Goal; trigger: React.ReactNode }
               <Label htmlFor="details">Details (optional)</Label>
               <Textarea id="details" name="details" rows={2} defaultValue={goal?.details ?? ""} />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="reminder_date">Remind me on (optional)</Label>
+              <Input id="reminder_date" name="reminder_date" type="date" defaultValue={goal?.reminder_date ?? ""} />
+              <p className="text-xs text-muted-foreground">A gentle self-nudge — shows on your goal once the date arrives.</p>
+            </div>
             <div className="flex items-center justify-between rounded-md border border-border p-3">
               <div>
                 <p className="text-sm font-medium">I need help with this</p>
@@ -218,12 +224,15 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
   );
 }
 
-function GoalRow({ goal, owner, isOwn }: { goal: Goal; owner: ProfileLite | undefined; isOwn: boolean }) {
+function GoalRow({ goal, owner, isOwn, nudgeCount }: { goal: Goal; owner: ProfileLite | undefined; isOwn: boolean; nudgeCount: number }) {
   const [pending, startTransition] = useTransition();
+  const [nudging, setNudging] = useState(false);
   const Icon = AREA_ICON[goal.area];
   const overdue = isOverdue(goal);
+  const todayStr = new Date().toLocaleDateString("en-CA");
+  const reminderDue = isOwn && !!goal.reminder_date && goal.status !== "done" && goal.reminder_date <= todayStr;
   return (
-    <div className={`flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5 ${overdue ? "border-destructive/40" : "border-border"}`}>
+    <div className={`flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5 ${overdue ? "border-destructive/40" : reminderDue ? "border-accent/40" : "border-border"}`}>
       <Avatar className="h-8 w-8 shrink-0">
         <AvatarImage src={owner?.photo_url ?? undefined} alt="" />
         <AvatarFallback className="bg-secondary text-[10px] text-secondary-foreground">{initials(owner?.full_name ?? null)}</AvatarFallback>
@@ -232,6 +241,11 @@ function GoalRow({ goal, owner, isOwn }: { goal: Goal; owner: ProfileLite | unde
         <div className="flex items-center gap-1.5">
           <Icon className="h-3.5 w-3.5 shrink-0 text-accent" />
           <p className="truncate text-sm font-medium">{goal.title}</p>
+          {isOwn && nudgeCount > 0 && (
+            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent" title="Nudges from the forum">
+              👋 {nudgeCount}
+            </span>
+          )}
         </div>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {owner?.full_name ?? "Member"}
@@ -242,6 +256,7 @@ function GoalRow({ goal, owner, isOwn }: { goal: Goal; owner: ProfileLite | unde
               {new Date(goal.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
             </span>
           )}
+          {reminderDue && <span className="text-accent"> · ⏰ reminder</span>}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
@@ -251,6 +266,23 @@ function GoalRow({ goal, owner, isOwn }: { goal: Goal; owner: ProfileLite | unde
           </span>
         )}
         <Badge className={STATUS_CLASS[goal.status]}>{STATUS_LABEL[goal.status]}</Badge>
+        {!isOwn && (overdue || goal.needs_help) && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1 px-2 text-xs"
+            disabled={nudging}
+            onClick={async () => {
+              setNudging(true);
+              const r = await nudgeGoal(goal.id);
+              setNudging(false);
+              if (r.ok) toast.success(r.message ?? "Nudge sent.");
+              else toast.error(r.message ?? "Could not nudge.");
+            }}
+          >
+            <Bell className="h-3 w-3" /> Nudge
+          </Button>
+        )}
         {isOwn && (
           <>
             <GoalDialog
@@ -289,10 +321,12 @@ export function GoalsPanel({
   goals,
   profiles,
   currentUserId,
+  nudgeCounts,
 }: {
   goals: Goal[];
   profiles: ProfileLite[];
   currentUserId: string;
+  nudgeCounts: Record<string, number>;
 }) {
   const nameById = useMemo(() => {
     const m = new Map<string, ProfileLite>();
@@ -388,7 +422,7 @@ export function GoalsPanel({
             </CardContent>
           </Card>
         ) : (
-          filtered.map((g) => <GoalRow key={g.id} goal={g} owner={nameById.get(g.member_id)} isOwn={g.member_id === currentUserId} />)
+          filtered.map((g) => <GoalRow key={g.id} goal={g} owner={nameById.get(g.member_id)} isOwn={g.member_id === currentUserId} nudgeCount={nudgeCounts[g.id] ?? 0} />)
         )}
       </div>
     </div>

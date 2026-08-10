@@ -23,6 +23,7 @@ export async function saveGoal(_prev: ActionResult, formData: FormData): Promise
   const dueDate = String(formData.get("due_date") || "") || null;
   const details = String(formData.get("details") || "").trim() || null;
   const needsHelp = formData.get("needs_help") === "on";
+  const reminderDate = String(formData.get("reminder_date") || "") || null;
 
   if (!title) return { ok: false, message: "A title is required." };
 
@@ -34,6 +35,7 @@ export async function saveGoal(_prev: ActionResult, formData: FormData): Promise
     due_date: dueDate,
     status,
     needs_help: needsHelp,
+    reminder_date: reminderDate,
     updated_at: new Date().toISOString(),
   };
 
@@ -64,4 +66,22 @@ export async function deleteGoal(id: string): Promise<ActionResult> {
   if (error) return { ok: false, message: error.message };
   revalidatePath("/goals");
   return { ok: true };
+}
+
+export async function nudgeGoal(goalId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "You must be signed in." };
+
+  const { data: goal } = await supabase.from("goals").select("member_id").eq("id", goalId).single();
+  if (!goal) return { ok: false, message: "Goal not found." };
+  if (goal.member_id === user.id) return { ok: false, message: "That's your own goal." };
+
+  const { error } = await supabase.from("goal_nudges").insert({ goal_id: goalId, from_user: user.id });
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/goals");
+  return { ok: true, message: "Nudge sent — they'll see it next time they open the app." };
 }
