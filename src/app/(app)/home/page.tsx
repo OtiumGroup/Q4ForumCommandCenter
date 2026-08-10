@@ -190,13 +190,13 @@ export default async function HomePage() {
           <p className="mt-0.5 text-sm text-muted-foreground">Meetings and events at a glance.</p>
           <div className="mt-4">
             {nextUp.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-2.5">
                 {nextUp.map((item) => (
                   <li key={`${item.type}-${item.id}`}>
-                    <Link href={item.type === "meeting" ? "/meetings" : item.type === "event" ? "/events" : `/bio/${item.id}`} className="block rounded-lg p-2 -m-2 transition-colors hover:bg-secondary/60">
+                    <Link href={item.type === "meeting" ? "/meetings" : item.type === "event" ? "/events" : `/bio/${item.id}`} className="block rounded-xl border border-border bg-secondary/40 p-3 transition-colors hover:bg-secondary/70">
                       <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">{item.type === "birthday" && <Cake className="h-3.5 w-3.5 text-accent" />}{item.title}</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(item.starts_at)}</p>
-                      {item.location && <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" /> {item.location}</p>}
+                      <p className="mt-0.5 text-xs text-muted-foreground">{formatDate(item.starts_at)}</p>
+                      {item.location && <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="mt-0.5 h-3 w-3 shrink-0" /> {item.location}</p>}
                     </Link>
                   </li>
                 ))}

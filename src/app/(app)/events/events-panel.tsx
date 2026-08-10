@@ -259,51 +259,24 @@ function EventCard({
 
   return (
     <Card className={`overflow-hidden transition-shadow hover:shadow-md ${isEo ? "border-l-4 border-l-accent" : ""}`}>
-      <CardContent className="space-y-3 py-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex gap-4">
-            <DateBlock iso={event.starts_at} accent={isEo} />
-            <div>
-              <div className="mb-1 flex items-center gap-2">
-                <p className="font-medium">{event.title}</p>
-                {isEo && (
-                  <Badge variant="secondary" className="gap-1">
-                    <Sparkles className="h-3 w-3" /> EO
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {new Date(event.starts_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} ·{" "}
-                {formatRange(event.starts_at, event.ends_at)}
-              </p>
-              {event.address && (
-                <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5" /> {event.address}
-                </p>
-              )}
-              {event.link && (
-                <a
-                  href={event.link}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 flex items-center gap-1 text-sm text-accent underline underline-offset-2"
-                >
-                  <LinkIcon className="h-3.5 w-3.5" /> Event link
-                </a>
-              )}
-              {event.description && <p className="mt-2 text-sm text-muted-foreground">{event.description}</p>}
-            </div>
-          </div>
-          <div className="flex shrink-0 items-start gap-2">
+      <CardContent className="space-y-3.5 py-5">
+        {/* Date + photo + manage */}
+        <div className="flex items-start gap-3">
+          <DateBlock iso={event.starts_at} accent={isEo} />
           {event.image_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={event.image_url} alt="" className="h-20 w-20 rounded-lg border border-border object-cover sm:h-24 sm:w-24" />
+            <img
+              src={event.image_url}
+              alt=""
+              className="max-h-28 w-auto max-w-[45%] shrink rounded-lg border border-border object-contain"
+            />
           )}
           {canManage && (
             <Button
               variant="ghost"
               size="icon"
               aria-label="Delete event"
+              className="ml-auto shrink-0"
               disabled={pending}
               onClick={() =>
                 startTransition(async () => {
@@ -315,11 +288,54 @@ function EventCard({
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           )}
-          </div>
         </div>
 
-        <RsvpControls eventId={event.id} myStatus={myStatus} />
+        {/* Title + type */}
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="font-display text-lg font-semibold leading-tight text-foreground">{event.title}</h3>
+          {isEo ? (
+            <Badge variant="secondary" className="gap-1">
+              <Sparkles className="h-3 w-3" /> EO
+            </Badge>
+          ) : (
+            <Badge variant="outline">Member event</Badge>
+          )}
+        </div>
 
+        {/* When + where */}
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">
+            {new Date(event.starts_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} ·{" "}
+            {formatRange(event.starts_at, event.ends_at)}
+          </p>
+          {event.address && (
+            <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {event.address}
+            </p>
+          )}
+          {event.link && (
+            <a
+              href={event.link}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-sm text-accent underline underline-offset-2"
+            >
+              <LinkIcon className="h-3.5 w-3.5" /> Event link
+            </a>
+          )}
+        </div>
+
+        {/* Description */}
+        {event.description && (
+          <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{event.description}</p>
+        )}
+
+        {/* RSVP */}
+        <div className="border-t border-border pt-3.5">
+          <RsvpControls eventId={event.id} myStatus={myStatus} />
+        </div>
+
+        {/* Attendees */}
         {attendees.length > 0 && (
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
