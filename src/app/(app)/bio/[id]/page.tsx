@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowLeft, Pencil, MapPin, GraduationCap, Heart, Users, Briefcase, Star,
+  ArrowLeft, Pencil, MapPin, Heart, Star, Briefcase,
   Award, Cake, Phone, Building2, ExternalLink, Home,
 } from "lucide-react";
 
@@ -32,7 +32,7 @@ type Kid = { name: string; age?: string };
 
 function Chip({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 text-[13px] font-medium text-accent">
       {children}
     </span>
   );
@@ -42,7 +42,7 @@ function SectionCard({ icon: Icon, title, children, className = "" }: { icon: Re
     <div className={`rounded-2xl border border-border bg-card p-5 ${className}`}>
       <div className="flex items-center gap-2">
         <Icon className="h-[18px] w-[18px] text-accent" />
-        <h2 className="font-display text-[15px] font-semibold text-foreground">{title}</h2>
+        <h2 className="font-display text-base font-semibold uppercase tracking-wide text-foreground">{title}</h2>
       </div>
       <div className="mt-3">{children}</div>
     </div>
@@ -58,12 +58,14 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
   if (!profile) notFound();
 
   const businesses = (Array.isArray(profile.businesses) ? profile.businesses : []) as Business[];
+  // Most recently added business populates as the headline (last in the list); show newest-first.
+  const orderedBiz = [...businesses].reverse();
   const kids = (Array.isArray(profile.kids) ? profile.kids : []) as Kid[];
   const websites = (Array.isArray(profile.websites) ? profile.websites : []) as string[];
   const interests = (profile.current_interests ?? "")
     .split(/[,;\n]/).map((s: string) => s.trim()).filter(Boolean).slice(0, 8);
   const isSelf = user?.id === id;
-  const primary = businesses[0];
+  const primary = orderedBiz[0] ?? null;
   const location = cityState(profile.home_address) ?? profile.hometown ?? null;
 
   return (
@@ -82,7 +84,7 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
       {/* Header */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="relative h-28 border-b border-accent/20 bg-accent/20 sm:h-32">
-          <span className="absolute right-4 top-3 font-display text-[13px] tracking-wide text-accent/80">Q4 · Forum</span>
+          <span className="absolute right-4 top-3 font-display text-sm tracking-wide text-accent/80">Q4 · Forum</span>
         </div>
         <div className="px-6 pb-7">
           <div className="flex items-end justify-between">
@@ -93,7 +95,7 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
               </AvatarFallback>
             </Avatar>
             {profile.phone_cell && (
-              <a href={`tel:${profile.phone_cell}`} className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground transition-transform hover:scale-[1.03]">
+              <a href={`tel:${profile.phone_cell}`} className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground transition-transform hover:scale-[1.03]">
                 <Phone className="h-3.5 w-3.5" /> Call
               </a>
             )}
@@ -104,7 +106,7 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
               {profile.full_name ?? "Member"}
             </h1>
             {primary && (
-              <p className="mt-1 text-[15px] text-muted-foreground">
+              <p className="mt-1 text-base text-muted-foreground">
                 {primary.title ? `${primary.title} · ` : ""}{primary.name}
               </p>
             )}
@@ -120,20 +122,20 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
             <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
               {profile.education && (
                 <div className="rounded-xl bg-secondary/50 p-3">
-                  <div className="text-[11px] text-muted-foreground">Education</div>
-                  <div className="mt-0.5 text-[13px] text-foreground">{profile.education}</div>
+                  <div className="text-xs text-muted-foreground">Education</div>
+                  <div className="mt-0.5 text-sm text-foreground">{profile.education}</div>
                 </div>
               )}
               {profile.hometown && (
                 <div className="rounded-xl bg-secondary/50 p-3">
-                  <div className="text-[11px] text-muted-foreground">Roots</div>
-                  <div className="mt-0.5 text-[13px] text-foreground">{profile.hometown}</div>
+                  <div className="text-xs text-muted-foreground">Roots</div>
+                  <div className="mt-0.5 text-sm text-foreground">{profile.hometown}</div>
                 </div>
               )}
               {(profile.eo_offices_held || profile.eo_member_since) && (
                 <div className="rounded-xl bg-secondary/50 p-3">
-                  <div className="text-[11px] text-muted-foreground">EO service</div>
-                  <div className="mt-0.5 text-[13px] text-foreground">
+                  <div className="text-xs text-muted-foreground">EO service</div>
+                  <div className="mt-0.5 text-sm text-foreground">
                     {profile.eo_offices_held || `Member since ${profile.eo_member_since}`}
                   </div>
                 </div>
@@ -145,18 +147,18 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
 
       {/* Sections */}
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        {businesses.length > 0 && (
-          <SectionCard icon={Briefcase} title={businesses.length > 1 ? "The businesses" : "The business"} className="sm:col-span-2">
+        {orderedBiz.length > 0 && (
+          <SectionCard icon={Briefcase} title={orderedBiz.length > 1 ? "The businesses" : "The business"} className="sm:col-span-2">
             <div className="space-y-4">
-              {businesses.map((b, i) => (
+              {orderedBiz.map((b, i) => (
                 <div key={i} className="border-b border-border pb-4 last:border-0 last:pb-0">
                   <div className="flex flex-wrap items-center gap-x-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium text-foreground">{b.name}</span>
                     {b.title && <span className="text-sm text-muted-foreground">— {b.title}</span>}
                   </div>
-                  {b.description && <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">{b.description}</p>}
-                  <div className="mt-2 flex flex-wrap gap-3 text-[13px]">
+                  {b.description && <p className="mt-1.5 text-[14.5px] leading-relaxed text-muted-foreground">{b.description}</p>}
+                  <div className="mt-2 flex flex-wrap gap-3 text-sm">
                     {safeUrl(b.website) && <a href={safeUrl(b.website)!} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent underline-offset-2 hover:underline">Website <ExternalLink className="h-3 w-3" /></a>}
                     {safeUrl(b.google_link) && <a href={safeUrl(b.google_link)!} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent underline-offset-2 hover:underline">Leave a review <ExternalLink className="h-3 w-3" /></a>}
                   </div>
@@ -168,7 +170,7 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
 
         {(profile.spouse_name || kids.length > 0 || profile.family_notes) && (
           <SectionCard icon={Heart} title="Family">
-            <div className="space-y-1.5 text-sm text-foreground">
+            <div className="space-y-1.5 text-[15px] text-foreground">
               {profile.spouse_name && <p><span className="text-muted-foreground">Spouse — </span>{profile.spouse_name}</p>}
               {kids.length > 0 && <p><span className="text-muted-foreground">Kids — </span>{kids.map((k) => `${k.name}${k.age ? ` (${k.age})` : ""}`).join(", ")}</p>}
               {profile.family_notes && <p className="text-muted-foreground">{profile.family_notes}</p>}
@@ -181,17 +183,17 @@ export default async function BioDetailPage({ params }: { params: Promise<{ id: 
             {interests.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {interests.map((t: string) => (
-                  <span key={t} className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">{t}</span>
+                  <span key={t} className="rounded-full bg-accent/10 px-3 py-1 text-[13px] font-medium text-accent">{t}</span>
                 ))}
               </div>
             )}
-            {profile.sport_played && <p className="mt-3 text-[13px] text-muted-foreground"><span className="text-foreground">Grew up on:</span> {profile.sport_played}</p>}
+            {profile.sport_played && <p className="mt-3 text-sm text-muted-foreground"><span className="text-foreground">Grew up on:</span> {profile.sport_played}</p>}
           </SectionCard>
         )}
 
         {(websites.length > 0 || profile.home_address) && (
           <SectionCard icon={Home} title="Details" className="sm:col-span-2">
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2 text-[15px]">
               {profile.home_address && <p className="flex items-start gap-1.5 text-muted-foreground"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />{profile.home_address}</p>}
               {websites.length > 0 && (
                 <div className="flex flex-wrap gap-3">

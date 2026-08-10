@@ -41,10 +41,10 @@ export default async function BioDirectoryPage() {
         </Button>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {featured.map((m) => {
           const biz = (Array.isArray(m.businesses) ? m.businesses : []) as Business[];
-          const primary = biz[0] ?? null;
+          const primary = biz.length ? biz[biz.length - 1] : null;
           return (
             <Link key={m.id} href={`/bio/${m.id}`} className="group block">
               <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border bg-secondary shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg group-hover:shadow-accent/20">
