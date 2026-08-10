@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegister } from "@/components/shared/sw-register";
 import { ThemeProvider } from "@/components/shared/theme-provider";
+import { FontSizeProvider } from "@/components/shared/font-size-provider";
 import "./globals.css";
 
 // Self-hosted (no external font requests — Geist ships as static files
@@ -46,9 +47,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {children}
-          <Toaster richColors position="top-center" />
-          <ServiceWorkerRegister />
+          <FontSizeProvider>
+            {children}
+            <Toaster richColors position="top-center" />
+            <ServiceWorkerRegister />
+          </FontSizeProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -3,13 +3,14 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Bell, Lock, Smartphone, UserCircle, Share, Plus, MoreVertical } from "lucide-react";
+import { Bell, Lock, Smartphone, UserCircle, Share, Plus, MoreVertical, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AppearanceControls } from "@/components/shared/appearance-controls";
 import { setNotificationPref, changePassword } from "./actions";
 
 function initials(name: string | null) {
@@ -85,6 +86,20 @@ export function SettingsPanel({
           <Button asChild variant="outline">
             <Link href="/bio/edit">Edit my bio</Link>
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Palette className="h-4 w-4 text-accent" /> Appearance
+          </CardTitle>
+          <CardDescription>Theme and text size — also available in the menu under your name, top-right.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="max-w-xs">
+            <AppearanceControls />
+          </div>
         </CardContent>
       </Card>
 

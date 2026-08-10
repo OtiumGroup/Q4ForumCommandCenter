@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { NAV_GROUPS, NAV_ITEMS, ADMIN_NAV_ITEMS, SETTINGS_ITEM, type NavItem, type NavGroup } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/login/actions";
-import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { AccountMenu } from "@/components/shared/account-menu";
 
 function initials(name: string | null) {
   if (!name) return "Q4";
@@ -27,7 +27,7 @@ function BrandMark() {
   return (
     <div className="flex items-center gap-2.5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/q4-mark.png" alt="Q4" className="h-9 w-9 rounded-[10px] shadow-sm" />
+      <img src="/brand/q4-mark.png" alt="Q4" className="h-9 w-9 shrink-0 rounded-[10px] object-contain shadow-sm" />
       <div className="leading-tight">
         <p className="font-display text-sm font-semibold tracking-tight">EO Q4 Forum</p>
         <p className="text-[11px] text-sidebar-foreground/60">Command Center</p>
@@ -128,7 +128,7 @@ export function AppShell({
 
       <div className="flex min-h-svh flex-1 flex-col">
         {/* Topbar */}
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-card/80 px-4 backdrop-blur-md lg:px-8">
+        <header className="sticky top-0 z-20 flex h-16 items-center border-b border-border bg-card/80 px-4 backdrop-blur-md lg:px-8">
           <div className="flex items-center gap-3 lg:hidden">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
@@ -146,28 +146,9 @@ export function AppShell({
                 </div>
               </SheetContent>
             </Sheet>
-            <span className="flex items-center gap-2 font-display text-sm font-semibold">
-              {currentItem && <currentItem.icon className="h-4 w-4 text-accent" />}
-              {currentItem?.label ?? "EO Q4 Forum"}
-            </span>
           </div>
-          <div className="hidden items-center gap-2 lg:flex">
-            {currentItem && <currentItem.icon className="h-[18px] w-[18px] text-accent" />}
-            <span className="font-display text-base font-semibold text-foreground">
-              {currentItem?.label ?? "EO Q4 Forum"}
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <div className="flex items-center gap-2 rounded-full border border-border bg-background/60 py-1 pl-1 pr-3">
-              <Avatar className="h-7 w-7">
-                {photoUrl ? <AvatarImage src={photoUrl} alt={fullName ?? ""} /> : null}
-                <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
-                  {initials(fullName)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden text-sm font-medium sm:inline">{fullName ?? "Member"}</span>
-            </div>
+          <div className="ml-auto">
+            <AccountMenu fullName={fullName} photoUrl={photoUrl} />
           </div>
         </header>
 
