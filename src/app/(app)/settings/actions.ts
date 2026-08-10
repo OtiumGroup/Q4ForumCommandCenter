@@ -38,3 +38,28 @@ export async function changePassword(
 
   return { ok: true, message: "Password updated." };
 }
+
+export async function changeEmail(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  if (!email || !email.includes("@") || !email.includes(".")) {
+    return { ok: false, message: "Enter a valid email address." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "You must be signed in." };
+  if (email === user.email) return { ok: false, message: "That's already your email." };
+
+  const { error } = await supabase.auth.updateUser({ email });
+  if (error) return { ok: false, message: error.message };
+
+  return {
+    ok: true,
+    message: "Confirmation link sent — check your inbox at the new address. Your email changes once you click it.",
+  };
+}

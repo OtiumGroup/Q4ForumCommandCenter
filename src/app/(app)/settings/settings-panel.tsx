@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Bell, Lock, Smartphone, UserCircle, Share, Plus, MoreVertical, Palette } from "lucide-react";
+import { Bell, Lock, Smartphone, UserCircle, Share, Plus, MoreVertical, Palette, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AppearanceControls } from "@/components/shared/appearance-controls";
-import { setNotificationPref, changePassword } from "./actions";
+import { setNotificationPref, changePassword, changeEmail } from "./actions";
 
 function initials(name: string | null) {
   if (!name) return "?";
@@ -53,6 +53,22 @@ export function SettingsPanel({
         toast.success(res.message ?? "Password updated.");
       } else {
         setPwError(res.message ?? "Something went wrong.");
+      }
+    });
+  }
+
+  const [emailPending, startEmailTransition] = useTransition();
+  const [emailMsg, setEmailMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  function handleEmailSubmit(formData: FormData) {
+    setEmailMsg(null);
+    startEmailTransition(async () => {
+      const res = await changeEmail({ ok: false }, formData);
+      if (res.ok) {
+        setEmailMsg({ ok: true, text: res.message ?? "Confirmation link sent." });
+        toast.success("Confirmation link sent.");
+      } else {
+        setEmailMsg({ ok: false, text: res.message ?? "Something went wrong." });
       }
     });
   }
@@ -124,6 +140,30 @@ export function SettingsPanel({
           </CardContent>
           <CardFooter>
             <SubmitButton pending={pwPending} />
+          </CardFooter>
+        </form>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Mail className="h-4 w-4 text-accent" /> Email
+          </CardTitle>
+          <CardDescription>Your sign-in address. Changing it needs confirmation from the new inbox.</CardDescription>
+        </CardHeader>
+        <form action={handleEmailSubmit}>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Current: <span className="font-medium text-foreground">{email}</span>
+            </p>
+            <div className="space-y-2 sm:max-w-sm">
+              <Label htmlFor="new_email">New email</Label>
+              <Input id="new_email" name="email" type="email" placeholder="you@company.com" required />
+            </div>
+            {emailMsg && <p className={`text-sm ${emailMsg.ok ? "text-accent" : "text-destructive"}`}>{emailMsg.text}</p>}
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={emailPending}>{emailPending ? "Sending…" : "Update email"}</Button>
           </CardFooter>
         </form>
       </Card>
