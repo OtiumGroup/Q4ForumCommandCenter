@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { CalendarClock, Plus, Trash2, Pencil, ChevronDown, ArrowRight } from "lucide-react";
 import { AddressLink } from "@/components/shared/address-link";
+import { FORUM_TZ, isoToTzDateInput, isoToTzTimeInput } from "@/lib/time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,18 +31,6 @@ type Meeting = {
   location: string | null;
   notes: string | null;
 };
-
-function toLocalDateInput(iso: string) {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-function toLocalTimeInput(iso: string | null) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 function MeetingDialog({
   meeting,
@@ -89,19 +78,19 @@ function MeetingDialog({
               <Label htmlFor="title">Title</Label>
               <Input id="title" name="title" defaultValue={meeting?.title ?? "Forum Meeting"} required />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <Input id="date" name="date" type="date" required defaultValue={meeting ? isoToTzDateInput(meeting.starts_at) : undefined} />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
-                <Input id="date" name="date" type="date" required defaultValue={meeting ? toLocalDateInput(meeting.starts_at) : undefined} />
+                <Label htmlFor="time">Start time</Label>
+                <Input id="time" name="time" type="time" defaultValue={meeting ? isoToTzTimeInput(meeting.starts_at) : undefined} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="time">Start time</Label>
-                <Input id="time" name="time" type="time" defaultValue={meeting ? toLocalTimeInput(meeting.starts_at) : undefined} />
+                <Label htmlFor="end_time">End time</Label>
+                <Input id="end_time" name="end_time" type="time" defaultValue={meeting ? isoToTzTimeInput(meeting.ends_at) : undefined} />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_time">End time (optional)</Label>
-              <Input id="end_time" name="end_time" type="time" defaultValue={meeting ? toLocalTimeInput(meeting.ends_at) : undefined} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
@@ -131,10 +120,10 @@ function MeetingDialog({
 
 function formatTimeRange(startsAt: string, endsAt: string | null) {
   const start = new Date(startsAt);
-  const startTime = start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const startTime = start.toLocaleTimeString("en-US", { timeZone: FORUM_TZ, hour: "numeric", minute: "2-digit" });
   if (!endsAt) return startTime;
   const end = new Date(endsAt);
-  const endTime = end.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const endTime = end.toLocaleTimeString("en-US", { timeZone: FORUM_TZ, hour: "numeric", minute: "2-digit" });
   return `${startTime}–${endTime}`;
 }
 
@@ -143,9 +132,9 @@ function DateBlock({ iso }: { iso: string }) {
   return (
     <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
       <span className="text-[11px] font-semibold uppercase tracking-wide text-accent">
-        {d.toLocaleDateString(undefined, { month: "short" })}
+        {d.toLocaleDateString("en-US", { timeZone: FORUM_TZ, month: "short" })}
       </span>
-      <span className="font-display text-xl font-semibold leading-none">{d.getDate()}</span>
+      <span className="font-display text-xl font-semibold leading-none">{d.toLocaleDateString("en-US", { timeZone: FORUM_TZ, day: "numeric" })}</span>
     </div>
   );
 }

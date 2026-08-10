@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { splitUpcoming, nextBirthdayWithin } from "@/lib/time";
+import { splitUpcoming, nextBirthdayWithin, FORUM_TZ } from "@/lib/time";
 import { Bell, Cake, CalendarDays, PartyPopper, Users, ArrowRight, HandHeart } from "lucide-react";
 import { AddressLink } from "@/components/shared/address-link";
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-US", { timeZone: FORUM_TZ, month: "short", day: "numeric", year: "numeric" });
 }
 function initials(name: string | null) {
   if (!name) return "?";

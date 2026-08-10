@@ -2,16 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { formInputToUtcISO } from "@/lib/time";
 
 type ActionResult = { ok: boolean; message?: string };
-
-function toTimestamp(date: FormDataEntryValue | null, time: FormDataEntryValue | null) {
-  const d = String(date ?? "");
-  const t = String(time ?? "") || "00:00";
-  if (!d) return null;
-  const iso = new Date(`${d}T${t}`);
-  return Number.isNaN(iso.getTime()) ? null : iso.toISOString();
-}
 
 export async function createEvent(
   _prev: ActionResult,
@@ -25,8 +18,8 @@ export async function createEvent(
 
   const title = String(formData.get("title") || "").trim();
   const description = String(formData.get("description") || "").trim() || null;
-  const startsAt = toTimestamp(formData.get("date"), formData.get("time"));
-  const endsAt = toTimestamp(formData.get("date"), formData.get("end_time"));
+  const startsAt = formInputToUtcISO(String(formData.get("date") || ""), String(formData.get("time") || ""));
+  const endsAt = formInputToUtcISO(String(formData.get("date") || ""), String(formData.get("end_time") || ""));
   const address = String(formData.get("address") || "").trim() || null;
   const link = String(formData.get("link") || "").trim() || null;
   const source = formData.get("source") === "eo" ? "eo" : "member";

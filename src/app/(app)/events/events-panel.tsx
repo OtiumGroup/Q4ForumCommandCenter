@@ -41,6 +41,7 @@ import {
 import { useRouter } from "next/navigation";
 import { createEvent, deleteEvent, setRsvp } from "./actions";
 import { AddressLink } from "@/components/shared/address-link";
+import { FORUM_TZ } from "@/lib/time";
 
 type EventRow = {
   id: string;
@@ -61,9 +62,9 @@ type ProfileLite = { id: string; full_name: string | null; photo_url: string | n
 
 function formatRange(startsAt: string, endsAt: string | null) {
   const start = new Date(startsAt);
-  const startTime = start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const startTime = start.toLocaleTimeString("en-US", { timeZone: FORUM_TZ, hour: "numeric", minute: "2-digit" });
   if (!endsAt) return startTime;
-  const endTime = new Date(endsAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const endTime = new Date(endsAt).toLocaleTimeString("en-US", { timeZone: FORUM_TZ, hour: "numeric", minute: "2-digit" });
   return `${startTime}–${endTime}`;
 }
 
@@ -87,9 +88,9 @@ function DateBlock({ iso, accent }: { iso: string; accent: boolean }) {
       }`}
     >
       <span className={`text-[11px] font-semibold uppercase tracking-wide ${accent ? "text-accent-foreground/90" : "text-accent"}`}>
-        {d.toLocaleDateString(undefined, { month: "short" })}
+        {d.toLocaleDateString("en-US", { timeZone: FORUM_TZ, month: "short" })}
       </span>
-      <span className="font-display text-xl font-semibold leading-none">{d.getDate()}</span>
+      <span className="font-display text-xl font-semibold leading-none">{d.toLocaleDateString("en-US", { timeZone: FORUM_TZ, day: "numeric" })}</span>
     </div>
   );
 }
@@ -305,7 +306,7 @@ function EventCard({
         {/* When + where */}
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">
-            {new Date(event.starts_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} ·{" "}
+            {new Date(event.starts_at).toLocaleDateString("en-US", { timeZone: FORUM_TZ, weekday: "long", month: "long", day: "numeric" })} ·{" "}
             {formatRange(event.starts_at, event.ends_at)}
           </p>
           {event.address && (

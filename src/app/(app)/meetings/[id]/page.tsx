@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CalendarClock, User } from "lucide-react";
 import { AddressLink } from "@/components/shared/address-link";
+import { FORUM_TZ } from "@/lib/time";
 import { PrintButton } from "./print-button";
 import { MeetingRsvp } from "./meeting-rsvp";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,10 +17,10 @@ function initials(name: string | null) {
 type Block = { time?: string; title: string; speaker?: string; detail?: string };
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-US", { timeZone: FORUM_TZ, weekday: "long", month: "long", day: "numeric", year: "numeric" });
 }
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("en-US", { timeZone: FORUM_TZ, hour: "numeric", minute: "2-digit" });
 }
 
 export default async function MeetingAgendaPage({ params }: { params: Promise<{ id: string }> }) {

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { formInputToUtcISO } from "@/lib/time";
 
 type ActionResult = { ok: boolean; message?: string };
 export type AgendaBlock = { time?: string; title: string; speaker?: string; detail?: string };
@@ -22,14 +23,6 @@ async function requireAdmin() {
   return { supabase, isAdmin: profile?.role === "admin" };
 }
 
-function toTimestamp(date: FormDataEntryValue | null, time: FormDataEntryValue | null) {
-  const d = String(date ?? "");
-  const t = String(time ?? "") || "00:00";
-  if (!d) return null;
-  const iso = new Date(`${d}T${t}`);
-  return Number.isNaN(iso.getTime()) ? null : iso.toISOString();
-}
-
 export async function createMeeting(
   _prev: ActionResult,
   formData: FormData
@@ -38,8 +31,8 @@ export async function createMeeting(
   if (!isAdmin) return { ok: false, message: "Admins only." };
 
   const title = String(formData.get("title") || "Forum Meeting").trim();
-  const startsAt = toTimestamp(formData.get("date"), formData.get("time"));
-  const endsAt = toTimestamp(formData.get("date"), formData.get("end_time"));
+  const startsAt = formInputToUtcISO(String(formData.get("date") || ""), String(formData.get("time") || ""));
+  const endsAt = formInputToUtcISO(String(formData.get("date") || ""), String(formData.get("end_time") || ""));
   const location = String(formData.get("location") || "").trim() || null;
   const notes = String(formData.get("notes") || "").trim() || null;
 
@@ -75,8 +68,8 @@ export async function updateMeeting(
   if (!id) return { ok: false, message: "Missing meeting id." };
 
   const title = String(formData.get("title") || "Forum Meeting").trim();
-  const startsAt = toTimestamp(formData.get("date"), formData.get("time"));
-  const endsAt = toTimestamp(formData.get("date"), formData.get("end_time"));
+  const startsAt = formInputToUtcISO(String(formData.get("date") || ""), String(formData.get("time") || ""));
+  const endsAt = formInputToUtcISO(String(formData.get("date") || ""), String(formData.get("end_time") || ""));
   const location = String(formData.get("location") || "").trim() || null;
   const notes = String(formData.get("notes") || "").trim() || null;
 
