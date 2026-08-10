@@ -57,12 +57,16 @@ function NavItemLink({ item, pathname, onNavigate }: { item: NavItem; pathname: 
           active ? "scale-y-100" : "scale-y-0"
         )}
       />
-      <Icon
+      <span
         className={cn(
-          "h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110",
-          active ? "text-accent" : "text-sidebar-foreground/60 group-hover:text-accent"
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-all duration-200",
+          active
+            ? "border-accent/30 bg-accent/15 text-accent shadow-[0_1px_2px_rgba(38,35,29,0.08)]"
+            : "border-border/50 bg-secondary/40 text-sidebar-foreground/55 group-hover:border-accent/30 group-hover:bg-accent/10 group-hover:text-accent"
         )}
-      />
+      >
+        <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+      </span>
       {item.label}
     </Link>
   );

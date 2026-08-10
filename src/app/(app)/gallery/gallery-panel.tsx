@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ImagePlus, Trash2, Images } from "lucide-react";
+import { ImagePlus, Trash2, Images, Download, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,6 +34,23 @@ export function GalleryPanel({
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [lightbox, setLightbox] = useState<GalleryPhoto | null>(null);
+
+  async function download(url: string) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = url.split("/").pop()?.split("?")[0] || "photo.jpg";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      window.open(url, "_blank");
+    }
+  }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -97,7 +114,7 @@ export function GalleryPanel({
           {photos.map((p) => (
             <div key={p.id} className="group relative break-inside-avoid overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt={p.caption ?? ""} className="w-full" />
+              <img src={p.url} alt={p.caption ?? ""} loading="lazy" onClick={() => setLightbox(p)} className="w-full cursor-zoom-in" />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/70 to-transparent p-3">
                 <Avatar className="h-6 w-6">
                   {p.uploader?.photo_url ? <AvatarImage src={p.uploader.photo_url} alt="" /> : null}
@@ -118,6 +135,34 @@ export function GalleryPanel({
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm duration-200 animate-in fade-in"
+        >
+          <div onClick={(e) => e.stopPropagation()} className="relative max-h-[90vh] max-w-3xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={lightbox.url} alt={lightbox.caption ?? ""} className="max-h-[90vh] w-auto rounded-xl object-contain" />
+            <div className="absolute right-2 top-2 flex gap-2">
+              <button
+                onClick={() => download(lightbox.url)}
+                aria-label="Download photo"
+                className="rounded-full bg-black/50 p-2 text-white transition hover:bg-black/70"
+              >
+                <Download className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setLightbox(null)}
+                aria-label="Close"
+                className="rounded-full bg-black/50 p-2 text-white transition hover:bg-black/70"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
