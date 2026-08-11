@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { splitUpcoming, nextBirthdayWithin, FORUM_TZ } from "@/lib/time";
+import { splitUpcoming, birthdayCountdown, FORUM_TZ } from "@/lib/time";
 import { Bell, Cake, CalendarDays, PartyPopper, Users, ArrowRight, HandHeart } from "lucide-react";
 import { AddressLink } from "@/components/shared/address-link";
 
@@ -10,6 +10,12 @@ function formatDate(iso: string) {
 function initials(name: string | null) {
   if (!name) return "?";
   return name.split(" ").map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+}
+function joinNames(names: string[]) {
+  if (names.length === 0) return "";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
 }
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
@@ -50,22 +56,26 @@ export default async function HomePage() {
   const { upcoming: upcomingMeetings } = splitUpcoming(meetings ?? []);
   const { upcoming: upcomingEvents } = splitUpcoming(events ?? []);
 
-  const upcomingBirthdays = (birthdayProfiles ?? [])
+  const memberMap = new Map((members ?? []).map((m) => [m.id, m]));
+  const birthdayList = (birthdayProfiles ?? [])
     .map((p) => {
-      const next = nextBirthdayWithin(p.birthday, 60);
-      return next ? { id: p.id, name: p.full_name ?? "Member", date: next } : null;
+      const c = birthdayCountdown(p.birthday);
+      if (!c || c.days > 60) return null;
+      return { id: p.id, name: p.full_name ?? "Member", days: c.days, date: c.date, photo_url: memberMap.get(p.id)?.photo_url ?? null };
     })
-    .filter((b): b is { id: string; name: string; date: Date } => b !== null);
+    .filter((b): b is { id: string; name: string; days: number; date: Date; photo_url: string | null } => b !== null)
+    .sort((a, b) => a.days - b.days);
+  const todaysBirthdays = birthdayList.filter((b) => b.days === 0);
+  const nextBirthday = birthdayList.find((b) => b.days > 0) ?? null;
 
   const nextUp = [
     ...upcomingMeetings.slice(0, 3).map((m) => ({ id: m.id, title: m.title, starts_at: m.starts_at, location: m.location, type: "meeting" as const })),
     ...upcomingEvents.slice(0, 3).map((e) => ({ id: e.id, title: e.title, starts_at: e.starts_at, location: e.address, type: "event" as const })),
-    ...upcomingBirthdays.map((b) => ({ id: b.id, title: `${b.name}'s birthday`, starts_at: b.date.toISOString(), location: null as string | null, type: "birthday" as const })),
+    ...birthdayList.map((b) => ({ id: b.id, title: `${b.name}'s birthday`, starts_at: b.date.toISOString(), location: null as string | null, type: "birthday" as const })),
   ].sort((a, b) => (a.starts_at > b.starts_at ? 1 : -1)).slice(0, 6);
 
   const nextItem = nextUp[0];
   const memberList = (members ?? []).filter((m) => m.full_name);
-  const memberMap = new Map((members ?? []).map((m) => [m.id, m]));
   const needHelp = (helpGoals ?? [])
     .map((g) => ({ id: g.id, title: g.title, member: memberMap.get(g.member_id) }))
     .filter((h): h is { id: string; title: string; member: { id: string; full_name: string | null; photo_url: string | null } } => Boolean(h.member))
@@ -97,11 +107,71 @@ export default async function HomePage() {
         </div>
       </div>
 
+      {/* Birthday today — celebration notice for everyone */}
+      {todaysBirthdays.length > 0 && (
+        <Link
+          href={todaysBirthdays.length === 1 ? `/bio/${todaysBirthdays[0].id}` : "/bio"}
+          className="group block overflow-hidden rounded-2xl bg-gradient-to-br from-accent to-accent/80 p-5 shadow-sm transition-shadow hover:shadow-md"
+        >
+          <div className="flex items-center gap-4 text-white">
+            <div className="flex -space-x-3">
+              {todaysBirthdays.slice(0, 3).map((b) => (
+                <div key={b.id} className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white/80 bg-white/20">
+                  {b.photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={b.photo_url} alt={b.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center font-display text-base">{initials(b.name)}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-white/90"><PartyPopper className="h-3.5 w-3.5" /> Today</p>
+              <p className="mt-0.5 font-display text-lg font-semibold leading-tight">
+                It&apos;s {joinNames(todaysBirthdays.map((b) => b.name.split(" ")[0]))}&apos;s birthday today! 🎉
+              </p>
+              <p className="text-sm text-white/85">Give them a shout and make their day.</p>
+            </div>
+            <ArrowRight className="hidden h-5 w-5 shrink-0 opacity-80 transition-transform group-hover:translate-x-0.5 sm:block" />
+          </div>
+        </Link>
+      )}
+
+      {/* Birthday countdown — the next one coming up */}
+      {todaysBirthdays.length === 0 && nextBirthday && (
+        <Link
+          href={`/bio/${nextBirthday.id}`}
+          className="group flex items-center gap-4 rounded-2xl border border-accent/30 bg-accent/5 p-4 transition-colors hover:bg-accent/10 sm:p-5"
+        >
+          <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-accent text-white shadow-sm">
+            <span className="font-display text-2xl font-semibold leading-none">{nextBirthday.days}</span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-white/85">{nextBirthday.days === 1 ? "day" : "days"}</span>
+          </div>
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-border">
+            {nextBirthday.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={nextBirthday.photo_url} alt={nextBirthday.name} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-primary font-display text-base text-primary-foreground">{initials(nextBirthday.name)}</div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-accent"><Cake className="h-3.5 w-3.5" /> Birthday countdown</p>
+            <p className="mt-0.5 font-display text-lg font-semibold text-foreground">{nextBirthday.name}</p>
+            <p className="text-sm text-muted-foreground">
+              {nextBirthday.days === 1 ? "Tomorrow" : `In ${nextBirthday.days} days`} · {nextBirthday.date.toLocaleDateString("en-US", { timeZone: FORUM_TZ, month: "long", day: "numeric" })} 🎂
+            </p>
+          </div>
+          <ArrowRight className="hidden h-5 w-5 shrink-0 text-accent opacity-70 transition-transform group-hover:translate-x-0.5 sm:block" />
+        </Link>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard label="Members" value={memberList.length} />
         <StatCard label="Next meeting" value={nextMeeting ? formatDate(nextMeeting.starts_at) : "—"} />
-        <StatCard label="Birthdays · 60 days" value={upcomingBirthdays.length} />
+        <StatCard label="Birthdays · 60 days" value={birthdayList.length} />
       </div>
 
       {/* Lend a hand */}

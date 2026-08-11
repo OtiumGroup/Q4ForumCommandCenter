@@ -61,6 +61,29 @@ export function nextBirthdayWithin(
   return diffDays <= days ? next : null;
 }
 
+// Days until a member's next birthday (0 = today), plus the next occurrence as
+// a UTC-midnight Date for display. Computed against the forum-timezone "today"
+// so a birthday reads correctly for everyone regardless of server/user tz.
+export function birthdayCountdown(
+  birthday: string | null | undefined,
+  tz: string = FORUM_TZ
+): { days: number; date: Date } | null {
+  if (!birthday) return null;
+  const parts = birthday.split("-").map(Number);
+  const month = parts[1];
+  const day = parts[2];
+  if (!month || !day) return null;
+
+  const todayStr = isoToTzDateInput(new Date().toISOString(), tz); // YYYY-MM-DD, forum tz
+  const [ty, tm, td] = todayStr.split("-").map(Number);
+  const todayUTC = Date.UTC(ty, tm - 1, td);
+  let year = ty;
+  if (Date.UTC(ty, month - 1, day) < todayUTC) year = ty + 1;
+  const birthdayUTC = Date.UTC(year, month - 1, day);
+  // +12h so the calendar day is stable when formatted in any US timezone
+  return { days: Math.round((birthdayUTC - todayUTC) / 86_400_000), date: new Date(birthdayUTC + 43_200_000) };
+}
+
 // ── Forum timezone handling ──────────────────────────────────────────────
 // Every forum meeting/event time is Fort Worth (Central). We store UTC in the
 // DB but always interpret user input and render output in Central, so times
