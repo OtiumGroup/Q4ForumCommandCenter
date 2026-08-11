@@ -15,9 +15,9 @@ function BrandMark() {
   return (
     <div className="flex items-center gap-2.5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/q4-mark.png" alt="Q4" className="h-9 w-9 shrink-0 rounded-[10px] object-contain shadow-sm" />
+      <img src="/brand/q4-mark.png" alt="Q4" className="h-11 w-11 shrink-0 rounded-xl object-cover shadow-[0_6px_16px_-4px_rgba(38,35,29,0.45)] ring-1 ring-black/5" />
       <div className="leading-tight">
-        <p className="font-display text-sm font-semibold tracking-tight">EO Q4 Forum</p>
+        <p className="font-display text-[15px] font-semibold tracking-tight">EO Q4 Forum</p>
         <p className="text-[11px] text-sidebar-foreground/60">Command Center</p>
       </div>
     </div>

@@ -20,12 +20,18 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* The squircle mark below is a placeholder for the final 3D Q4 logo.
-   When the logo image is added to /public, swap this block for an <img>. */
+/* The 3D Q4 mark, presented as a floating hero with a warm shadow + bronze glow. */
 function BrandMark() {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src="/brand/q4-mark.png" alt="EO Q4 Forum" className="mx-auto h-24 w-24 rounded-2xl shadow-sm" />
+    <div className="relative mx-auto h-32 w-32">
+      <div aria-hidden className="absolute -inset-4 -z-10 rounded-full bg-accent/25 blur-3xl" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/q4-mark.png"
+        alt="EO Q4 Forum"
+        className="q4-float h-32 w-32 rounded-[26px] object-cover shadow-[0_22px_45px_-10px_rgba(38,35,29,0.5),0_8px_18px_-6px_rgba(154,119,72,0.45)] ring-1 ring-black/5"
+      />
+    </div>
   );
 }
 
