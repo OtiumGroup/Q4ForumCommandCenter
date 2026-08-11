@@ -19,6 +19,23 @@ export function splitUpcoming<T extends { starts_at: string }>(
   return { upcoming, past };
 }
 
+// Splits by CALENDAR DAY in the forum timezone: an item stays "upcoming"
+// through the entire day it occurs and only moves to "past" the next day.
+// (splitUpcoming above moves items to past the moment their start time passes.)
+export function splitByForumDay<T extends { starts_at: string }>(
+  items: T[],
+  tz: string = FORUM_TZ
+): { upcoming: T[]; past: T[] } {
+  const today = isoToTzDateInput(new Date().toISOString(), tz); // YYYY-MM-DD, forum tz
+  const upcoming: T[] = [];
+  const past: T[] = [];
+  for (const item of items) {
+    if (isoToTzDateInput(item.starts_at, tz) >= today) upcoming.push(item);
+    else past.push(item);
+  }
+  return { upcoming, past };
+}
+
 // Same reasoning as above: kept out of any component body so the
 // react-hooks purity lint doesn't flag the (perfectly fine, once-per-
 // request) use of `new Date()` here.

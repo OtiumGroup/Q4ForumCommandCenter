@@ -151,7 +151,6 @@ export function MeetingsPanel({
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const [showPast, setShowPast] = useState(false);
-  const next = upcoming[0];
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -168,13 +167,6 @@ export function MeetingsPanel({
             <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
               Upcoming Meetings
             </h1>
-            {next && (
-              <p className="mt-2 text-sm text-primary-foreground/70">
-                {new Date(next.starts_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} ·{" "}
-                {formatTimeRange(next.starts_at, next.ends_at)}
-                {next.location && ` · ${next.location}`}
-              </p>
-            )}
           </div>
           {isAdmin && (
             <MeetingDialog
@@ -249,27 +241,40 @@ export function MeetingsPanel({
         ))}
       </div>
 
-      {past.length > 0 && (
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowPast((v) => !v)}
-            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ChevronDown className={`h-4 w-4 transition-transform ${showPast ? "rotate-180" : ""}`} />
-            Past meetings ({past.length})
-          </button>
-          {showPast && (
-            <div className="mt-3 space-y-2 opacity-70">
+      <div className="border-t border-border pt-5">
+        <button
+          type="button"
+          onClick={() => setShowPast((v) => !v)}
+          className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ChevronDown className={`h-4 w-4 transition-transform ${showPast ? "rotate-180" : ""}`} />
+          Past meetings ({past.length})
+        </button>
+        {showPast &&
+          (past.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              Meetings move here the day after they take place. The full agenda and notes stay available to everyone.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-2">
               {past.map((m) => (
-                <Card key={m.id}>
-                  <CardContent className="flex items-center justify-between py-3">
-                    <div>
-                      <p className="text-sm font-medium">{m.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(m.starts_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} ·{" "}
-                        {formatTimeRange(m.starts_at, m.ends_at)}
-                      </p>
+                <Card key={m.id} className="opacity-90 transition-shadow hover:shadow-md">
+                  <CardContent className="flex items-start justify-between gap-4 py-4">
+                    <div className="flex gap-4">
+                      <DateBlock iso={m.starts_at} />
+                      <div>
+                        <p className="font-medium">{m.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(m.starts_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} ·{" "}
+                          {formatTimeRange(m.starts_at, m.ends_at)}
+                        </p>
+                        {m.location && (
+                          <AddressLink address={m.location} className="mt-1 text-sm text-accent" iconClassName="mt-0.5 h-3.5 w-3.5" />
+                        )}
+                        <Link href={`/meetings/${m.id}`} className="mt-2 flex w-fit items-center gap-1 text-sm font-medium text-accent hover:underline">
+                          View agenda &amp; schedule <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </div>
                     </div>
                     {isAdmin && (
                       <Button
@@ -293,9 +298,8 @@ export function MeetingsPanel({
                 </Card>
               ))}
             </div>
-          )}
-        </div>
-      )}
+          ))}
+      </div>
     </div>
   );
 }
