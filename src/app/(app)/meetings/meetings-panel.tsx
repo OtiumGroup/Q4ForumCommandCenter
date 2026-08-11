@@ -211,7 +211,7 @@ export function MeetingsPanel({
                     <AddressLink address={m.location} className="mt-1 text-sm text-accent" iconClassName="mt-0.5 h-3.5 w-3.5" />
                   )}
                   {m.notes && <p className="mt-2 text-sm text-muted-foreground">{m.notes}</p>}
-                  <Link href={`/meetings/${m.id}`} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
+                  <Link href={`/meetings/${m.id}`} className="mt-2 flex w-fit items-center gap-1 text-sm font-medium text-accent hover:underline">
                     View agenda &amp; schedule <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
