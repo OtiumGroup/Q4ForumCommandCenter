@@ -13,6 +13,7 @@ import {
   Settings,
   ShieldCheck,
   Award,
+  Tent,
 } from "lucide-react";
 
 export type NavItem = {
@@ -37,6 +38,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/bio", label: "Member Bios", icon: UserCircle },
       { href: "/goals", label: "Goals & Accountability", icon: Target },
       { href: "/positions", label: "Forum Positions", icon: Award },
+      { href: "/retreat", label: "Forum Retreat", icon: Tent },
       { href: "/gallery", label: "Photo Gallery", icon: Images },
     ],
   },
