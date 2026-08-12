@@ -128,10 +128,10 @@ export function AppShell({
               </SheetTrigger>
               <SheetContent side="left" className="w-64 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground">
                 <SheetTitle className="sr-only">Navigation</SheetTitle>
-                <div className="px-5 py-6">
+                <div className="shrink-0 px-5 py-6">
                   <BrandMark />
                 </div>
-                <div className="px-3">
+                <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-6">
                   <NavLinks groups={groups} pathname={pathname} onNavigate={() => setOpen(false)} />
                 </div>
               </SheetContent>
