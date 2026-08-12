@@ -12,103 +12,108 @@
 
 /*
   EO Q4 Forum Command Center — design system
-  Lane A "Quiet Luxury": warm bone canvas, obsidian ink, refined bronze.
-  Built for a small group of senior business owners — a private members'
-  club feel. Light-first and high-contrast for legibility; bronze is the
-  single restrained accent (drawn from the Q4 logo mark).
+  "Money" theme: banknote-cream canvas, deep forest-green surfaces, rich
+  currency-green accent, and antique-gold engraving as the second color.
+  Built to feel like currency — engraved, valuable, and unmistakably green.
+  Night mode stays green (layered forest greens), never black.
 */
 :root {
   --radius: 0.625rem;
 
-  /* Base surfaces */
-  --background: #F4F1EA;        /* warm bone */
-  --foreground: #24211B;        /* warm ink */
-  --card: #FCFAF5;              /* soft off-white */
-  --card-foreground: #24211B;
-  --popover: #FCFAF5;
-  --popover-foreground: #24211B;
+  /* Base surfaces — banknote paper */
+  --background: #EEF0E2;        /* pale money-green cream */
+  --foreground: #14261C;        /* deep green-black ink */
+  --card: #F8F9F0;             /* soft off-white, green tint */
+  --card-foreground: #14261C;
+  --popover: #F8F9F0;
+  --popover-foreground: #14261C;
 
-  /* Brand */
-  --primary: #26231D;           /* obsidian ink */
-  --primary-foreground: #F4F1EA;
-  --secondary: #EAE3D5;         /* warm sand */
-  --secondary-foreground: #26231D;
-  --accent: #9A7748;            /* refined bronze — Q4 accent */
-  --accent-foreground: #F7F2E9;
+  /* Brand — currency green + antique gold */
+  --primary: #1C3D2B;           /* deep forest green (dark surfaces) */
+  --primary-foreground: #EFF1E4;
+  --secondary: #DDE4D0;         /* pale sage */
+  --secondary-foreground: #1C3D2B;
+  --accent: #2E6B4F;            /* currency green — primary accent */
+  --accent-foreground: #FFFFFF;
+  --gold: #AC8746;              /* antique gold — engraved sparkle */
+  --gold-foreground: #221B0C;
 
-  --muted: #ECE6DA;
-  --muted-foreground: #6E6656;
+  --muted: #E3E7D7;
+  --muted-foreground: #5E6A56;
 
   --destructive: #9B3B2F;
   --destructive-foreground: #F7F2E9;
-  --success: #3C6B4E;
-  --success-foreground: #F7F2E9;
-  --warning: #9A6B2E;
-  --warning-foreground: #F7F2E9;
+  --success: #2E6B4F;
+  --success-foreground: #FFFFFF;
+  --warning: #AC8746;
+  --warning-foreground: #221B0C;
 
-  --border: #E1D9C9;
-  --input: #E1D9C9;
-  --ring: #9A7748;
+  --border: #D5DCC5;
+  --input: #D5DCC5;
+  --ring: #2E6B4F;
 
-  --sidebar: #EEE8DC;           /* readable warm panel (was dark navy) */
-  --sidebar-foreground: #3B362C;
-  --sidebar-primary: #8A6A3F;   /* bronze active state */
-  --sidebar-primary-foreground: #F7F2E9;
-  --sidebar-accent: #E4DBC9;    /* hover surface */
-  --sidebar-accent-foreground: #26231D;
-  --sidebar-border: #DCD2BF;
-  --sidebar-ring: #9A7748;
+  --sidebar: #E4E8D5;           /* pale money-green panel */
+  --sidebar-foreground: #2A3A2E;
+  --sidebar-primary: #2E6B4F;   /* green active state */
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #D9E0C9;    /* hover surface */
+  --sidebar-accent-foreground: #1C3D2B;
+  --sidebar-border: #CED6BC;
+  --sidebar-ring: #2E6B4F;
 
-  --chart-1: #9A7748;
-  --chart-2: #26231D;
-  --chart-3: #3C6B4E;
-  --chart-4: #B08D57;
-  --chart-5: #6E6656;
+  --chart-1: #2E6B4F;
+  --chart-2: #1C3D2B;
+  --chart-3: #AC8746;
+  --chart-4: #6E9B72;
+  --chart-5: #5E6A56;
 }
 
 .dark {
-  --background: #16140F;        /* warm charcoal (not navy, not black) */
-  --foreground: #ECE6D8;
-  --card: #1E1B15;
-  --card-foreground: #ECE6D8;
-  --popover: #1E1B15;
-  --popover-foreground: #ECE6D8;
+  /* Night mode stays money-green — layered forest greens, never black */
+  --background: #0E1F16;        /* deepest forest green */
+  --foreground: #E7EBD9;
+  --card: #14291D;              /* one shade up */
+  --card-foreground: #E7EBD9;
+  --popover: #14291D;
+  --popover-foreground: #E7EBD9;
 
-  --primary: #C9A66B;           /* bronze */
-  --primary-foreground: #16140F;
-  --secondary: #29241B;
-  --secondary-foreground: #ECE6D8;
-  --accent: #C9A66B;
-  --accent-foreground: #16140F;
+  --primary: #1F3F2C;           /* forest-green surface (headers/tiles stay green) */
+  --primary-foreground: #EDE9CF;
+  --secondary: #1B3325;
+  --secondary-foreground: #E7EBD9;
+  --accent: #4E9E74;            /* brighter currency green for legibility */
+  --accent-foreground: #0E1F16;
+  --gold: #CBA65A;              /* brighter antique gold */
+  --gold-foreground: #0E1F16;
 
-  --muted: #221E17;
-  --muted-foreground: #A79E8A;
+  --muted: #16291D;
+  --muted-foreground: #98A689;
 
   --destructive: #C24A3F;
-  --destructive-foreground: #16140F;
-  --success: #4E9573;
-  --success-foreground: #16140F;
-  --warning: #C98A3B;
-  --warning-foreground: #16140F;
+  --destructive-foreground: #0E1F16;
+  --success: #4E9E74;
+  --success-foreground: #0E1F16;
+  --warning: #CBA65A;
+  --warning-foreground: #0E1F16;
 
-  --border: #302A20;
-  --input: #302A20;
-  --ring: #C9A66B;
+  --border: #244030;
+  --input: #244030;
+  --ring: #4E9E74;
 
-  --sidebar: #110F0A;
-  --sidebar-foreground: #ECE6D8;
-  --sidebar-primary: #C9A66B;
-  --sidebar-primary-foreground: #110F0A;
-  --sidebar-accent: #201C14;
-  --sidebar-accent-foreground: #ECE6D8;
-  --sidebar-border: #2A241A;
-  --sidebar-ring: #C9A66B;
+  --sidebar: #0B1A12;           /* deepest panel */
+  --sidebar-foreground: #E7EBD9;
+  --sidebar-primary: #4E9E74;
+  --sidebar-primary-foreground: #0B1A12;
+  --sidebar-accent: #16291D;    /* hover */
+  --sidebar-accent-foreground: #E7EBD9;
+  --sidebar-border: #203829;
+  --sidebar-ring: #4E9E74;
 
-  --chart-1: #C9A66B;
-  --chart-2: #ECE6D8;
-  --chart-3: #4E9573;
-  --chart-4: #B08D57;
-  --chart-5: #A79E8A;
+  --chart-1: #4E9E74;
+  --chart-2: #E7EBD9;
+  --chart-3: #CBA65A;
+  --chart-4: #6E9B72;
+  --chart-5: #98A689;
 }
 
 @theme inline {
@@ -124,6 +129,8 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-destructive: var(--destructive);

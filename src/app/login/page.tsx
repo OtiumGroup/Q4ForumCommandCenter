@@ -24,7 +24,7 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 function BrandMark() {
   return (
     <div className="relative mx-auto h-32 w-32">
-      <div aria-hidden className="absolute -inset-4 -z-10 rounded-full bg-accent/25 blur-3xl" />
+      <div aria-hidden className="absolute -inset-4 -z-10 rounded-full bg-gold/30 blur-3xl" />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/brand/q4-mark.png"

@@ -29,7 +29,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, { className?: string 
       ctx.lineWidth = 2.4;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.strokeStyle = "#26231D";
+      ctx.strokeStyle = "#14261C";
     }, []);
 
     function point(e: React.PointerEvent) {

@@ -131,7 +131,7 @@ function DateBlock({ iso }: { iso: string }) {
   const d = new Date(iso);
   return (
     <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-accent">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-gold">
         {d.toLocaleDateString("en-US", { timeZone: FORUM_TZ, month: "short" })}
       </span>
       <span className="font-display text-xl font-semibold leading-none">{d.toLocaleDateString("en-US", { timeZone: FORUM_TZ, day: "numeric" })}</span>
@@ -161,7 +161,7 @@ export function MeetingsPanel({
         />
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-accent">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gold">
               <CalendarClock className="h-3.5 w-3.5" /> EO Fort Worth · Q4 Forum
             </p>
             <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
