@@ -12,60 +12,61 @@
 
 /*
   EO Q4 Forum Command Center — design system
-  "Money" theme: banknote-cream canvas, deep forest-green surfaces, rich
-  currency-green accent, and antique-gold engraving as the second color.
-  Built to feel like currency — engraved, valuable, and unmistakably green.
-  Night mode stays green (layered forest greens), never black.
+  "Money" theme, mixed with the original warm canvas.
+  LIGHT: warm bone/sand/tan paper (the original tones) with money-green as the
+  brand color where bronze/obsidian used to be; a warm sand "engraving" on the
+  green headers instead of gold.
+  DARK: stays money-green — layered forest greens (never black), gold sparkle.
 */
 :root {
   --radius: 0.625rem;
 
-  /* Base surfaces — banknote paper */
-  --background: #EEF0E2;        /* pale money-green cream */
-  --foreground: #14261C;        /* deep green-black ink */
-  --card: #F8F9F0;             /* soft off-white, green tint */
-  --card-foreground: #14261C;
-  --popover: #F8F9F0;
-  --popover-foreground: #14261C;
+  /* Base surfaces — original warm paper */
+  --background: #F4F1EA;        /* warm bone */
+  --foreground: #24211B;        /* warm ink */
+  --card: #FCFAF5;             /* soft off-white */
+  --card-foreground: #24211B;
+  --popover: #FCFAF5;
+  --popover-foreground: #24211B;
 
-  /* Brand — currency green + antique gold */
-  --primary: #1C3D2B;           /* deep forest green (dark surfaces) */
-  --primary-foreground: #EFF1E4;
-  --secondary: #DDE4D0;         /* pale sage */
+  /* Brand — green replaces the old obsidian + bronze */
+  --primary: #1C3D2B;           /* deep forest green (dark surfaces/headers) */
+  --primary-foreground: #F4F1EA;
+  --secondary: #EAE3D5;         /* warm sand */
   --secondary-foreground: #1C3D2B;
   --accent: #2E6B4F;            /* currency green — primary accent */
-  --accent-foreground: #FFFFFF;
-  --gold: #AC8746;              /* antique gold — engraved sparkle */
-  --gold-foreground: #221B0C;
+  --accent-foreground: #F7F2E9;
+  --gold: #C1A56E;              /* warm sand/tan engraving on green headers */
+  --gold-foreground: #24211B;
 
-  --muted: #E3E7D7;
-  --muted-foreground: #5E6A56;
+  --muted: #ECE6DA;
+  --muted-foreground: #6E6656;
 
   --destructive: #9B3B2F;
   --destructive-foreground: #F7F2E9;
   --success: #2E6B4F;
-  --success-foreground: #FFFFFF;
-  --warning: #AC8746;
-  --warning-foreground: #221B0C;
+  --success-foreground: #F7F2E9;
+  --warning: #9A6B2E;
+  --warning-foreground: #F7F2E9;
 
-  --border: #D5DCC5;
-  --input: #D5DCC5;
+  --border: #E1D9C9;
+  --input: #E1D9C9;
   --ring: #2E6B4F;
 
-  --sidebar: #E4E8D5;           /* pale money-green panel */
-  --sidebar-foreground: #2A3A2E;
+  --sidebar: #EEE8DC;           /* warm panel (original) */
+  --sidebar-foreground: #3B362C;
   --sidebar-primary: #2E6B4F;   /* green active state */
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #D9E0C9;    /* hover surface */
+  --sidebar-primary-foreground: #F7F2E9;
+  --sidebar-accent: #E4DBC9;    /* warm hover surface */
   --sidebar-accent-foreground: #1C3D2B;
-  --sidebar-border: #CED6BC;
+  --sidebar-border: #DCD2BF;
   --sidebar-ring: #2E6B4F;
 
   --chart-1: #2E6B4F;
   --chart-2: #1C3D2B;
-  --chart-3: #AC8746;
+  --chart-3: #C1A56E;
   --chart-4: #6E9B72;
-  --chart-5: #5E6A56;
+  --chart-5: #6E6656;
 }
 
 .dark {
