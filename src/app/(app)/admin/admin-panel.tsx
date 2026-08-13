@@ -461,7 +461,7 @@ function SendWelcomeAllButton() {
         <DialogHeader>
           <DialogTitle>Send welcome emails to all members?</DialogTitle>
           <DialogDescription>
-            Every active member gets a secure link to set their password and sign in — perfect for onboarding the forum for the first time. It&apos;s safe to run again later; existing members can just ignore it.
+            Every active member gets a secure email link to set a strong password and sign in. When they land in the app they&apos;re welcomed, shown how to install it to their home screen, and reminded to keep everything confidential. Safe to run again anytime — members who are already set up can simply ignore it.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

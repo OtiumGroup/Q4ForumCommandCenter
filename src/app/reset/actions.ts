@@ -2,13 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isStrongPassword } from "@/lib/password";
 
 export type SetPasswordState = { status: "idle" | "error"; message?: string };
 
 export async function setNewPassword(_prev: SetPasswordState, formData: FormData): Promise<SetPasswordState> {
   const password = String(formData.get("password") || "");
   const confirm = String(formData.get("confirm") || "");
-  if (password.length < 8) return { status: "error", message: "Use at least 8 characters." };
+  if (!isStrongPassword(password)) return { status: "error", message: "Please choose a stronger password that meets every requirement below." };
   if (password !== confirm) return { status: "error", message: "Passwords don't match." };
 
   const supabase = await createClient();

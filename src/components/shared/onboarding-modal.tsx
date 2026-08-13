@@ -3,12 +3,13 @@
 import { useRef, useState } from "react";
 import {
   CalendarClock, Users, Tent, Target, Library, Share, Plus,
-  Smartphone, Monitor, ArrowRight, ArrowLeft, Check,
+  Smartphone, Monitor, ArrowRight, ArrowLeft, Check, ShieldCheck,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { completeOnboarding } from "@/app/(app)/onboarding-actions";
 
 function Feature({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
@@ -28,8 +29,11 @@ function Feature({ icon: Icon, title, children }: { icon: React.ElementType; tit
 export function OnboardingModal({ initialOpen, firstName }: { initialOpen: boolean; firstName?: string | null }) {
   const [open, setOpen] = useState(initialOpen);
   const [step, setStep] = useState(0);
+  const [agreed, setAgreed] = useState(false);
   const saved = useRef(false);
   const isIOS = typeof navigator !== "undefined" && /iP(hone|ad|od)/.test(navigator.userAgent);
+
+  const last = 3;
 
   function finish() {
     if (!saved.current) {
@@ -38,14 +42,18 @@ export function OnboardingModal({ initialOpen, firstName }: { initialOpen: boole
     }
     setOpen(false);
   }
-
-  const last = 2;
-  const next = () => (step < last ? setStep(step + 1) : finish());
-  const back = () => setStep(Math.max(0, step - 1));
+  const next = () => setStep((s) => Math.min(last, s + 1));
+  const back = () => setStep((s) => Math.max(0, s - 1));
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) finish(); }}>
-      <DialogContent className="max-w-md gap-0 overflow-hidden p-0">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent
+        showCloseButton={false}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        className="max-w-md gap-0 overflow-hidden p-0"
+      >
         {/* Brand banner */}
         <div className="relative flex items-center gap-3 bg-gradient-to-br from-primary to-primary/85 px-6 py-5">
           <div aria-hidden className="absolute inset-0 opacity-40" style={{ background: "radial-gradient(circle at 88% 12%, var(--accent) 0%, transparent 45%)" }} />
@@ -122,10 +130,33 @@ export function OnboardingModal({ initialOpen, firstName }: { initialOpen: boole
             </div>
           )}
 
+          {step === 3 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/12 text-accent">
+                  <ShieldCheck className="h-5 w-5" />
+                </span>
+                <div>
+                  <DialogTitle className="font-display text-xl font-semibold tracking-tight">This stays between us</DialogTitle>
+                  <DialogDescription className="text-[13px] text-muted-foreground">One important thing before you dive in.</DialogDescription>
+                </div>
+              </div>
+              <p className="text-[14px] leading-relaxed text-muted-foreground">
+                Everything inside the Command Center is <span className="font-medium text-foreground">confidential</span>. What&apos;s shared in the forum stays in the forum — please treat every member&apos;s information, goals, and discussions with the discretion our <span className="font-medium text-foreground">Q4 Constitution</span> requires.
+              </p>
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-accent/40 bg-accent/5 p-3.5">
+                <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
+                <span className="text-[13px] leading-snug text-foreground">
+                  I understand, and I&apos;ll keep everything here confidential in line with our Q4 Constitution.
+                </span>
+              </label>
+            </div>
+          )}
+
           {/* Footer: dots + nav */}
           <div className="mt-6 flex items-center justify-between">
             <div className="flex gap-1.5">
-              {[0, 1, 2].map((i) => (
+              {[0, 1, 2, 3].map((i) => (
                 <span key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-5 bg-accent" : "w-1.5 bg-border"}`} />
               ))}
             </div>
@@ -135,11 +166,11 @@ export function OnboardingModal({ initialOpen, firstName }: { initialOpen: boole
               )}
               {step < last ? (
                 <>
-                  <Button variant="ghost" size="sm" onClick={finish} className="text-muted-foreground">Skip</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setStep(last)} className="text-muted-foreground">Skip</Button>
                   <Button size="sm" onClick={next}>Next <ArrowRight className="ml-1 h-4 w-4" /></Button>
                 </>
               ) : (
-                <Button size="sm" onClick={finish}><Check className="mr-1 h-4 w-4" /> Get started</Button>
+                <Button size="sm" onClick={finish} disabled={!agreed}><Check className="mr-1 h-4 w-4" /> Enter the Command Center</Button>
               )}
             </div>
           </div>
