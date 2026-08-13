@@ -53,14 +53,14 @@
   --input: #E1D9C9;
   --ring: #2E6B4F;
 
-  --sidebar: #EEE8DC;           /* warm panel (original) */
-  --sidebar-foreground: #3B362C;
-  --sidebar-primary: #2E6B4F;   /* green active state */
-  --sidebar-primary-foreground: #F7F2E9;
-  --sidebar-accent: #E4DBC9;    /* warm hover surface */
-  --sidebar-accent-foreground: #1C3D2B;
-  --sidebar-border: #DCD2BF;
-  --sidebar-ring: #2E6B4F;
+  --sidebar: #1C3D2B;           /* deep money-green menu */
+  --sidebar-foreground: #F1ECDF;
+  --sidebar-primary: #3E8B63;
+  --sidebar-primary-foreground: #0E1F16;
+  --sidebar-accent: #2A4E38;    /* lighter green — active/hover */
+  --sidebar-accent-foreground: #F5F1E6;
+  --sidebar-border: #2C5039;
+  --sidebar-ring: #3E8B63;
 
   --chart-1: #2E6B4F;
   --chart-2: #1C3D2B;

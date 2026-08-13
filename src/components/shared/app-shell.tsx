@@ -13,12 +13,12 @@ import { AccountMenu } from "@/components/shared/account-menu";
 
 function BrandMark() {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-3">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/q4-mark.png" alt="Q4" className="h-11 w-11 shrink-0 rounded-xl object-cover shadow-[0_6px_16px_-4px_rgba(38,35,29,0.45)] ring-1 ring-black/5" />
+      <img src="/brand/q4-mark.png" alt="Q4" className="h-16 w-16 shrink-0 rounded-2xl object-cover shadow-[0_8px_18px_-6px_rgba(0,0,0,0.5)] ring-1 ring-black/10" />
       <div className="leading-tight">
-        <p className="font-display text-[15px] font-semibold tracking-tight">EO Q4 Forum</p>
-        <p className="text-[11px] text-sidebar-foreground/60">Command Center</p>
+        <p className="font-display text-xl font-semibold tracking-tight">EO Q4 Forum</p>
+        <p className="text-[12px] text-sidebar-foreground/60">Command Center</p>
       </div>
     </div>
   );
@@ -41,7 +41,7 @@ function NavItemLink({ item, pathname, onNavigate }: { item: NavItem; pathname: 
     >
       <span
         className={cn(
-          "absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent transition-transform duration-300 ease-out",
+          "absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gold transition-transform duration-300 ease-out",
           active ? "scale-y-100" : "scale-y-0"
         )}
       />
@@ -49,7 +49,7 @@ function NavItemLink({ item, pathname, onNavigate }: { item: NavItem; pathname: 
         className={cn(
           "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-all duration-200",
           active
-            ? "border-accent/40 bg-accent/20 text-accent shadow-[0_1px_2px_rgba(38,35,29,0.12)]"
+            ? "border-transparent bg-accent text-primary-foreground shadow-[0_1px_2px_rgba(0,0,0,0.18)]"
             : "border-border bg-card text-accent/75 shadow-[0_1px_1px_rgba(38,35,29,0.05)] group-hover:border-accent/40 group-hover:bg-accent/15 group-hover:text-accent"
         )}
       >
@@ -65,7 +65,7 @@ function NavLinks({ groups, pathname, onNavigate }: { groups: NavGroup[]; pathna
     <nav className="flex flex-col gap-5">
       {groups.map((group) => (
         <div key={group.label} className="flex flex-col gap-1">
-          <p className="mb-0.5 px-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/40">
+          <p className="mb-0.5 px-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-gold/90">
             {group.label}
           </p>
           {group.items.map((item) => (
