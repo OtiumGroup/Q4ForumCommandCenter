@@ -16,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, photo_url, role, status")
+    .select("full_name, photo_url, role, status, onboarded_at")
     .eq("id", user.id)
     .single();
 
@@ -26,11 +26,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     await supabase.from("profiles").update({ status: "active" }).eq("id", user.id);
   }
 
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? null;
+
   return (
     <AppShell
       fullName={profile?.full_name ?? null}
       photoUrl={profile?.photo_url ?? null}
       isAdmin={profile?.role === "admin"}
+      needsOnboarding={!profile?.onboarded_at}
+      firstName={firstName}
     >
       {children}
     </AppShell>

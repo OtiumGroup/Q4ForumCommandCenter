@@ -10,6 +10,7 @@ import { NAV_GROUPS, ADMIN_NAV_ITEMS, SETTINGS_ITEM, type NavItem, type NavGroup
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/login/actions";
 import { AccountMenu } from "@/components/shared/account-menu";
+import { OnboardingModal } from "@/components/shared/onboarding-modal";
 
 function BrandMark() {
   return (
@@ -82,11 +83,15 @@ export function AppShell({
   fullName,
   photoUrl,
   isAdmin,
+  needsOnboarding = false,
+  firstName = null,
 }: {
   children: React.ReactNode;
   fullName: string | null;
   photoUrl: string | null;
   isAdmin: boolean;
+  needsOnboarding?: boolean;
+  firstName?: string | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -96,6 +101,7 @@ export function AppShell({
 
   return (
     <div className="flex min-h-svh w-full">
+      <OnboardingModal initialOpen={needsOnboarding} firstName={firstName} />
       {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex print:hidden">
         <div className="px-5 py-6">
