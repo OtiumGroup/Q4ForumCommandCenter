@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { GoalsPanel } from "./goals-panel";
 
-export default async function GoalsPage() {
+export default async function GoalsPage({ searchParams }: { searchParams: Promise<{ goal?: string }> }) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,6 +23,6 @@ export default async function GoalsPage() {
   });
 
   return (
-    <GoalsPanel goals={goals ?? []} profiles={profiles ?? []} currentUserId={user?.id ?? ""} nudgeCounts={nudgeCounts} />
+    <GoalsPanel goals={goals ?? []} profiles={profiles ?? []} currentUserId={user?.id ?? ""} nudgeCounts={nudgeCounts} initialGoalId={sp.goal ?? null} />
   );
 }

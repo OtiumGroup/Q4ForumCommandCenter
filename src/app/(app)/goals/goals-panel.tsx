@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Plus, Target, HandHeart, Pencil, Trash2, Briefcase, Heart, Sparkles, AlertTriangle, ListChecks, Bell } from "lucide-react";
+import { Plus, Target, HandHeart, Pencil, Trash2, Briefcase, Heart, Sparkles, AlertTriangle, ListChecks, Bell, CheckCircle2, RotateCcw, ChevronDown } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import { saveGoal, deleteGoal, nudgeGoal } from "./actions";
+import { saveGoal, deleteGoal, nudgeGoal, setGoalStatus } from "./actions";
 
 type Area = "business" | "personal" | "life";
 type Status = "not_started" | "on_track" | "at_risk" | "done";
@@ -225,49 +225,52 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
   );
 }
 
-function GoalRow({ goal, owner, isOwn, nudgeCount }: { goal: Goal; owner: ProfileLite | undefined; isOwn: boolean; nudgeCount: number }) {
+function GoalRow({ goal, owner, isOwn, nudgeCount, onOpenDetail }: { goal: Goal; owner: ProfileLite | undefined; isOwn: boolean; nudgeCount: number; onOpenDetail: (id: string) => void }) {
   const [pending, startTransition] = useTransition();
   const [nudging, setNudging] = useState(false);
   const Icon = AREA_ICON[goal.area];
   const overdue = isOverdue(goal);
+  const done = goal.status === "done";
   const todayStr = new Date().toLocaleDateString("en-CA");
   const reminderDue = isOwn && !!goal.reminder_date && goal.status !== "done" && goal.reminder_date <= todayStr;
   return (
-    <div className={`flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5 ${overdue ? "border-destructive/40" : reminderDue ? "border-accent/40" : "border-border"}`}>
-      <Avatar className="h-8 w-8 shrink-0">
-        <AvatarImage src={owner?.photo_url ?? undefined} alt="" />
-        <AvatarFallback className="bg-secondary text-[10px] text-secondary-foreground">{initials(owner?.full_name ?? null)}</AvatarFallback>
-      </Avatar>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <Icon className="h-3.5 w-3.5 shrink-0 text-accent" />
-          <p className="truncate text-sm font-medium">{goal.title}</p>
-          {isOwn && nudgeCount > 0 && (
-            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent" title="Nudges from the forum">
-              👋 {nudgeCount}
-            </span>
-          )}
+    <div className={`flex items-center gap-2 rounded-xl border bg-card px-3 py-2.5 ${overdue ? "border-destructive/40" : reminderDue ? "border-accent/40" : "border-border"} ${done ? "opacity-70" : ""}`}>
+      <button type="button" onClick={() => onOpenDetail(goal.id)} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left transition-colors hover:bg-secondary/40 -mx-1 px-1 py-0.5">
+        <Avatar className="h-8 w-8 shrink-0">
+          <AvatarImage src={owner?.photo_url ?? undefined} alt="" />
+          <AvatarFallback className="bg-secondary text-[10px] text-secondary-foreground">{initials(owner?.full_name ?? null)}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <Icon className="h-3.5 w-3.5 shrink-0 text-accent" />
+            <p className="truncate text-sm font-medium">{goal.title}</p>
+            {isOwn && nudgeCount > 0 && (
+              <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent" title="Nudges from the forum">
+                👋 {nudgeCount}
+              </span>
+            )}
+          </div>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {owner?.full_name ?? "Member"}
+            {goal.due_date && (
+              <span className={overdue ? "text-destructive" : undefined}>
+                {" · "}
+                {overdue ? "overdue " : "due "}
+                {new Date(goal.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+              </span>
+            )}
+            {reminderDue && <span className="text-accent"> · ⏰ reminder</span>}
+          </p>
         </div>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {owner?.full_name ?? "Member"}
-          {goal.due_date && (
-            <span className={overdue ? "text-destructive" : undefined}>
-              {" · "}
-              {overdue ? "overdue " : "due "}
-              {new Date(goal.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-            </span>
-          )}
-          {reminderDue && <span className="text-accent"> · ⏰ reminder</span>}
-        </p>
-      </div>
+      </button>
       <div className="flex shrink-0 items-center gap-1.5">
-        {goal.needs_help && (
+        {goal.needs_help && !done && (
           <span className="hidden items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive sm:inline-flex">
             <HandHeart className="h-3 w-3" /> Help
           </span>
         )}
         <Badge className={STATUS_CLASS[goal.status]}>{STATUS_LABEL[goal.status]}</Badge>
-        {!isOwn && (overdue || goal.needs_help) && (
+        {!isOwn && !done && (overdue || goal.needs_help) && (
           <Button
             variant="outline"
             size="sm"
@@ -286,6 +289,29 @@ function GoalRow({ goal, owner, isOwn, nudgeCount }: { goal: Goal; owner: Profil
         )}
         {isOwn && (
           <>
+            {done ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                aria-label="Reopen goal"
+                disabled={pending}
+                onClick={() => startTransition(async () => { const r = await setGoalStatus(goal.id, "on_track"); if (!r.ok) toast.error(r.message ?? "Could not reopen."); else toast.success("Reopened."); })}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                aria-label="Mark complete"
+                disabled={pending}
+                onClick={() => startTransition(async () => { const r = await setGoalStatus(goal.id, "done"); if (!r.ok) toast.error(r.message ?? "Could not update."); else toast.success("Marked complete 🎉"); })}
+              >
+                <CheckCircle2 className="h-4 w-4 text-success" />
+              </Button>
+            )}
             <GoalDialog
               goal={goal}
               trigger={
@@ -316,6 +342,88 @@ function GoalRow({ goal, owner, isOwn, nudgeCount }: { goal: Goal; owner: Profil
   );
 }
 
+function GoalDetailDialog({
+  goal, owner, isOwn, open, onOpenChange,
+}: {
+  goal: Goal | null;
+  owner: ProfileLite | undefined;
+  isOwn: boolean;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [nudging, setNudging] = useState(false);
+  if (!goal) return null;
+  const Icon = AREA_ICON[goal.area];
+  const overdue = isOverdue(goal);
+  const done = goal.status === "done";
+  const firstName = owner?.full_name?.split(" ")[0] ?? "them";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
+            <Icon className="h-3.5 w-3.5" /> {AREA_LABEL[goal.area]}
+          </p>
+          <DialogTitle className="font-display text-xl leading-snug">{goal.title}</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="inline-flex items-center gap-2">
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={owner?.photo_url ?? undefined} alt="" />
+                <AvatarFallback className="bg-secondary text-[9px] text-secondary-foreground">{initials(owner?.full_name ?? null)}</AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground">{owner?.full_name ?? "Member"}</span>
+            </span>
+            <Badge className={STATUS_CLASS[goal.status]}>{STATUS_LABEL[goal.status]}</Badge>
+            {goal.needs_help && !done && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive">
+                <HandHeart className="h-3 w-3" /> Asked for help
+              </span>
+            )}
+            {goal.due_date && (
+              <span className={`text-xs ${overdue ? "text-destructive" : "text-muted-foreground"}`}>
+                {overdue ? "Overdue · " : "Due "}
+                {new Date(goal.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+              </span>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-border bg-secondary/40 p-3.5">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              {goal.needs_help ? "The goal & where they'd like help" : "Details"}
+            </p>
+            <p className="whitespace-pre-wrap text-sm text-foreground">{goal.details?.trim() || "No details added yet."}</p>
+          </div>
+        </div>
+
+        <DialogFooter className="flex-wrap gap-2 sm:justify-start">
+          {isOwn ? (
+            done ? (
+              <Button variant="outline" disabled={pending} onClick={() => startTransition(async () => { const r = await setGoalStatus(goal.id, "on_track"); if (r.ok) { toast.success("Reopened."); onOpenChange(false); } else toast.error(r.message ?? "Could not reopen."); })}>
+                <RotateCcw className="mr-1.5 h-4 w-4" /> Reopen goal
+              </Button>
+            ) : (
+              <Button disabled={pending} onClick={() => startTransition(async () => { const r = await setGoalStatus(goal.id, "done"); if (r.ok) { toast.success("Marked complete 🎉"); onOpenChange(false); } else toast.error(r.message ?? "Could not update."); })}>
+                <CheckCircle2 className="mr-1.5 h-4 w-4" /> Mark complete
+              </Button>
+            )
+          ) : (
+            (overdue || goal.needs_help) && !done && (
+              <Button variant="outline" disabled={nudging} onClick={async () => { setNudging(true); const r = await nudgeGoal(goal.id); setNudging(false); if (r.ok) toast.success(r.message ?? "Nudge sent."); else toast.error(r.message ?? "Could not nudge."); }}>
+                <Bell className="mr-1.5 h-4 w-4" /> Nudge {firstName}
+              </Button>
+            )
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 type WhatFilter = "all" | "at_risk" | "needs_help" | "overdue";
 
 export function GoalsPanel({
@@ -323,11 +431,13 @@ export function GoalsPanel({
   profiles,
   currentUserId,
   nudgeCounts,
+  initialGoalId = null,
 }: {
   goals: Goal[];
   profiles: ProfileLite[];
   currentUserId: string;
   nudgeCounts: Record<string, number>;
+  initialGoalId?: string | null;
 }) {
   const nameById = useMemo(() => {
     const m = new Map<string, ProfileLite>();
@@ -337,11 +447,16 @@ export function GoalsPanel({
 
   const [who, setWho] = useState<string>("everyone"); // "everyone" | "me" | memberId
   const [what, setWhat] = useState<WhatFilter>("all");
+  const [detailGoalId, setDetailGoalId] = useState<string | null>(initialGoalId);
+  const [showCompleted, setShowCompleted] = useState(false);
 
-  const totalGoals = goals.length;
-  const atRisk = goals.filter((g) => g.status === "at_risk").length;
-  const needingHelp = goals.filter((g) => g.needs_help).length;
-  const overdueCount = goals.filter(isOverdue).length;
+  const activeGoals = useMemo(() => goals.filter((g) => g.status !== "done"), [goals]);
+  const completedGoals = useMemo(() => goals.filter((g) => g.status === "done"), [goals]);
+
+  const totalGoals = activeGoals.length;
+  const atRisk = activeGoals.filter((g) => g.status === "at_risk").length;
+  const needingHelp = activeGoals.filter((g) => g.needs_help).length;
+  const overdueCount = activeGoals.filter(isOverdue).length;
 
   const membersWithGoals = useMemo(() => {
     const ids = Array.from(new Set(goals.map((g) => g.member_id)));
@@ -352,7 +467,7 @@ export function GoalsPanel({
   }, [goals, nameById, currentUserId]);
 
   const filtered = useMemo(() => {
-    return goals
+    return activeGoals
       .filter((g) => {
         if (who === "me") {
           if (g.member_id !== currentUserId) return false;
@@ -371,7 +486,19 @@ export function GoalsPanel({
         if (sa !== sb) return sa - sb;
         return (a.due_date ?? "9999-12-31").localeCompare(b.due_date ?? "9999-12-31");
       });
-  }, [goals, who, what, currentUserId]);
+  }, [activeGoals, who, what, currentUserId]);
+
+  const completedFiltered = useMemo(() => {
+    return completedGoals
+      .filter((g) => {
+        if (who === "me") return g.member_id === currentUserId;
+        if (who !== "everyone") return g.member_id === who;
+        return true;
+      })
+      .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
+  }, [completedGoals, who, currentUserId]);
+
+  const detailGoal = detailGoalId ? goals.find((g) => g.id === detailGoalId) ?? null : null;
 
   const toggle = (f: WhatFilter) => setWhat((prev) => (prev === f ? "all" : f));
 
@@ -414,14 +541,42 @@ export function GoalsPanel({
             <CardContent className="flex flex-col items-center gap-2 py-16 text-center">
               <Target className="h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                {goals.length === 0 ? "No goals yet — add one to start tracking." : "Nothing matches this filter."}
+                {activeGoals.length === 0 ? "No active goals yet — add one to start tracking." : "Nothing matches this filter."}
               </p>
             </CardContent>
           </Card>
         ) : (
-          filtered.map((g) => <GoalRow key={g.id} goal={g} owner={nameById.get(g.member_id)} isOwn={g.member_id === currentUserId} nudgeCount={nudgeCounts[g.id] ?? 0} />)
+          filtered.map((g) => <GoalRow key={g.id} goal={g} owner={nameById.get(g.member_id)} isOwn={g.member_id === currentUserId} nudgeCount={nudgeCounts[g.id] ?? 0} onOpenDetail={setDetailGoalId} />)
         )}
       </div>
+
+      {completedFiltered.length > 0 && (
+        <div className="mt-5 border-t border-border pt-4">
+          <button
+            type="button"
+            onClick={() => setShowCompleted((v) => !v)}
+            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${showCompleted ? "rotate-180" : ""}`} />
+            Completed ({completedFiltered.length})
+          </button>
+          {showCompleted && (
+            <div className="mt-3 space-y-2">
+              {completedFiltered.map((g) => (
+                <GoalRow key={g.id} goal={g} owner={nameById.get(g.member_id)} isOwn={g.member_id === currentUserId} nudgeCount={nudgeCounts[g.id] ?? 0} onOpenDetail={setDetailGoalId} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <GoalDetailDialog
+        goal={detailGoal}
+        owner={detailGoal ? nameById.get(detailGoal.member_id) : undefined}
+        isOwn={!!detailGoal && detailGoal.member_id === currentUserId}
+        open={detailGoalId !== null && detailGoal !== null}
+        onOpenChange={(v) => { if (!v) setDetailGoalId(null); }}
+      />
     </div>
   );
 }

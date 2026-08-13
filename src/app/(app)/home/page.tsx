@@ -193,10 +193,10 @@ export default async function HomePage() {
                     <div className="flex h-full w-full items-center justify-center bg-primary text-xs font-medium text-primary-foreground">{initials(h.member.full_name)}</div>
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">{h.member.full_name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{h.title}</p>
-                </div>
+                <Link href={`/goals?goal=${h.id}`} className="min-w-0 flex-1 group">
+                  <p className="truncate text-sm font-medium text-foreground group-hover:text-accent">{h.member.full_name}</p>
+                  <p className="truncate text-xs text-muted-foreground group-hover:underline">{h.title}</p>
+                </Link>
                 <Link href={`/bio/${h.member.id}`} className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-accent hover:underline">
                   Reach out <ArrowRight className="h-3 w-3" />
                 </Link>
