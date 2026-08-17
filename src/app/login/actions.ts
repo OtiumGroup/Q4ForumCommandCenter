@@ -49,12 +49,25 @@ export async function passwordStep(
     };
   }
 
-  // Password verified — signInWithPassword has established the cookie-backed
-  // session, so the member is in. iOS/Safari will offer to save this password
-  // and auto-fill it with Face ID / Touch ID on future logins. (Two-factor
-  // email codes were removed in favor of this smoother, device-native flow;
-  // the otpStep/resendOtp helpers below remain if we ever reinstate 2FA.)
-  redirect("/home");
+  // Clear the password-only session — it must not grant access on its own.
+  await supabase.auth.signOut();
+
+  // Send the second-factor code to their inbox. shouldCreateUser: false
+  // means this only works for accounts that already exist (invited
+  // members), never for creating new accounts from the login screen.
+  const { error: otpError } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false },
+  });
+
+  if (otpError) {
+    return {
+      status: "error",
+      message: "Could not send a verification code. Try again in a moment.",
+    };
+  }
+
+  return { status: "otp_sent", email };
 }
 
 /**
