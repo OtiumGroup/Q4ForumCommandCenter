@@ -46,14 +46,26 @@ export function PushToggle() {
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
+  const configured = !!VAPID_PUBLIC_KEY;
+
   async function enable() {
-    if (!VAPID_PUBLIC_KEY) {
-      toast.error("Notifications aren't set up yet — check back soon.");
+    if (!configured) {
+      toast.error("Push isn't switched on yet — the admin needs to finish setup.");
+      return;
+    }
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+    if (isIOS && !standalone) {
+      toast.error("On iPhone, open the app from your Home Screen first, then enable here.");
       return;
     }
     setBusy(true);
     try {
       const perm = await Notification.requestPermission();
+      if (perm === "denied") {
+        toast.error("Notifications are blocked for this app in your device settings.");
+        setBusy(false);
+        return;
+      }
       if (perm !== "granted") {
         toast.error("Notifications weren't allowed.");
         setBusy(false);
@@ -62,7 +74,7 @@ export function PushToggle() {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY!),
       });
       const json = sub.toJSON();
       if (!json.keys?.p256dh || !json.keys?.auth) {
@@ -83,7 +95,7 @@ export function PushToggle() {
         toast.error("Couldn't save. Try again.");
       }
     } catch {
-      toast.error("Couldn't enable notifications.");
+      toast.error("Couldn't enable notifications on this device.");
     }
     setBusy(false);
   }
@@ -107,6 +119,14 @@ export function PushToggle() {
 
   if (supported === false) {
     return <p className="text-sm text-muted-foreground">This device or browser doesn&apos;t support push notifications.</p>;
+  }
+
+  if (!configured) {
+    return (
+      <p className="rounded-md bg-secondary/60 px-3 py-2 text-[13px] text-secondary-foreground">
+        Push notifications are being set up — check back shortly.
+      </p>
+    );
   }
 
   return (
