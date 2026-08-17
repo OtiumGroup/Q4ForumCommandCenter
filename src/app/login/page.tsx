@@ -65,7 +65,7 @@ function LoginForm() {
                   <Lock className="h-4 w-4 text-accent" /> Sign in
                 </CardTitle>
                 <CardDescription>
-                  Enter your email and password. You&apos;ll confirm with a code sent to your inbox next.
+                  Enter your email and password to sign in. You&apos;ll stay signed in on this device.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
