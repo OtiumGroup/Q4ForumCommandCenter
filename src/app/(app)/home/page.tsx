@@ -32,7 +32,7 @@ export default async function HomePage() {
 
   const [{ data: profile }, { data: broadcasts }, { data: meetings }, { data: events }, { data: birthdayProfiles }, { data: members }, { data: helpGoals }] =
     await Promise.all([
-      supabase.from("profiles").select("full_name").eq("id", user?.id ?? "").single(),
+      supabase.from("profiles").select("full_name, in_app_notifications").eq("id", user?.id ?? "").single(),
       supabase.from("broadcasts").select("id, title, body, created_at").order("created_at", { ascending: false }).limit(5),
       supabase.from("meetings").select("id, title, starts_at, location").order("starts_at", { ascending: true }),
       supabase.from("events").select("id, title, starts_at, address, notify_forum, created_at").order("starts_at", { ascending: true }),
@@ -44,14 +44,17 @@ export default async function HomePage() {
   const firstName = profile?.full_name?.split(" ")[0];
 
   type Notice = { id: string; title: string; body: string; created_at: string; kind: "broadcast" | "event" };
-  const notices: Notice[] = [
-    ...(broadcasts ?? []).map((b) => ({ id: `b-${b.id}`, title: b.title, body: b.body, created_at: b.created_at, kind: "broadcast" as const })),
-    ...(events ?? []).filter((e) => e.notify_forum).map((e) => ({
-      id: `e-${e.id}`, title: `New event: ${e.title}`,
-      body: `Happening ${formatDate(e.starts_at)}${e.address ? ` at ${e.address}` : ""}.`,
-      created_at: e.created_at, kind: "event" as const,
-    })),
-  ].sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).slice(0, 6);
+  const showInAppNotices = profile?.in_app_notifications !== false;
+  const notices: Notice[] = !showInAppNotices
+    ? []
+    : [
+        ...(broadcasts ?? []).map((b) => ({ id: `b-${b.id}`, title: b.title, body: b.body, created_at: b.created_at, kind: "broadcast" as const })),
+        ...(events ?? []).filter((e) => e.notify_forum).map((e) => ({
+          id: `e-${e.id}`, title: `New event: ${e.title}`,
+          body: `Happening ${formatDate(e.starts_at)}${e.address ? ` at ${e.address}` : ""}.`,
+          created_at: e.created_at, kind: "event" as const,
+        })),
+      ].sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).slice(0, 6);
 
   const { upcoming: upcomingMeetings } = splitUpcoming(meetings ?? []);
   const { upcoming: upcomingEvents } = splitUpcoming(events ?? []);
@@ -250,6 +253,8 @@ export default async function HomePage() {
                   </li>
                 ))}
               </ul>
+            ) : !showInAppNotices ? (
+              <p className="text-sm text-muted-foreground">In-app notices are turned off. You can turn them back on in Settings.</p>
             ) : (
               <p className="text-sm text-muted-foreground">No notices yet — your moderator&apos;s updates will show up here.</p>
             )}

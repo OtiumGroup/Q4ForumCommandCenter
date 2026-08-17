@@ -124,6 +124,28 @@ export async function postBroadcast(
     // Never block the broadcast if push isn't configured or fails.
   }
 
+  // Also email members who've kept "Email notices" on (best-effort).
+  try {
+    const { emailConfigured, sendBroadcastEmail } = await import("@/lib/email");
+    if (emailConfigured()) {
+      const { data: recipients } = await supabase
+        .from("profiles")
+        .select("email, full_name")
+        .eq("status", "active")
+        .eq("email_notifications", true)
+        .not("email", "is", null);
+      if (recipients?.length) {
+        await sendBroadcastEmail(
+          recipients.map((r) => ({ email: r.email as string, name: r.full_name as string | null })),
+          title,
+          body
+        );
+      }
+    }
+  } catch {
+    // Never block the broadcast if email isn't configured or fails.
+  }
+
   revalidatePath("/admin");
   revalidatePath("/home");
   return { ok: true, message: "Broadcast sent to all members." };
