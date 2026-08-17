@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Bell, Lock, Smartphone, UserCircle, Share, Plus, MoreVertical, Palette, Mail } from "lucide-react";
+import { Bell, Lock, Smartphone, UserCircle, Share, Plus, MoreVertical, Palette, Mail, ScanFace } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AppearanceControls } from "@/components/shared/appearance-controls";
 import { PushToggle } from "@/components/shared/push-toggle";
+import { FaceIdSetup } from "@/components/shared/faceid-setup";
 import { setNotificationPref, changePassword, changeEmail } from "./actions";
 
 function initials(name: string | null) {
@@ -213,6 +214,18 @@ export function SettingsPanel({
               }}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ScanFace className="h-4 w-4 text-accent" /> Face ID sign-in
+          </CardTitle>
+          <CardDescription>Set up Face ID (or Touch ID) so you can sign in with a tap instead of an emailed code.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FaceIdSetup />
         </CardContent>
       </Card>
 

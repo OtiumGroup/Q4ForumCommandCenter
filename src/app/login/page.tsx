@@ -4,7 +4,8 @@ import { useActionState, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { ShieldCheck, Lock, Mail } from "lucide-react";
+import { ShieldCheck, Lock, Mail, ScanFace } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,30 @@ function LoginForm() {
   const [pwState, pwAction] = useActionState<PasswordStepState, FormData>(passwordStep, { status: "idle" });
   const [otpState, otpAction] = useActionState<OtpStepState, FormData>(otpStep, { status: "idle" });
   const [resent, setResent] = useState(false);
+  const [faceBusy, setFaceBusy] = useState(false);
+  const [faceError, setFaceError] = useState<string | null>(null);
+
+  async function signInWithFaceId() {
+    setFaceBusy(true);
+    setFaceError(null);
+    try {
+      const supabase = createClient();
+      // Passkey methods are experimental; type them narrowly rather than `any`.
+      const auth = supabase.auth as unknown as {
+        signInWithPasskey: () => Promise<{ error: { message: string } | null }>;
+      };
+      const { error } = await auth.signInWithPasskey();
+      if (error) {
+        setFaceError(error.message || "Face ID didn't work — use your email and password below.");
+        setFaceBusy(false);
+        return;
+      }
+      window.location.href = next;
+    } catch {
+      setFaceError("Face ID didn't work — use your email and password below.");
+      setFaceBusy(false);
+    }
+  }
 
   const step: 1 | 2 = pwState.status === "otp_sent" ? 2 : 1;
   const email = pwState.email ?? "";
@@ -84,6 +109,16 @@ function LoginForm() {
               </CardContent>
               <CardFooter className="flex-col gap-3">
                 <SubmitButton>Continue</SubmitButton>
+
+                <div className="relative w-full py-0.5">
+                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                  <div className="relative flex justify-center"><span className="bg-card px-2 text-xs text-muted-foreground">or</span></div>
+                </div>
+                <Button type="button" variant="outline" className="w-full" onClick={signInWithFaceId} disabled={faceBusy}>
+                  <ScanFace className="mr-1.5 h-4 w-4" /> {faceBusy ? "Waiting for Face ID…" : "Sign in with Face ID"}
+                </Button>
+                {faceError && <p className="text-center text-sm text-destructive">{faceError}</p>}
+
                 <p className="text-center text-xs text-muted-foreground">
                   New member?{" "}
                   <Link href="/invite" className="text-accent underline underline-offset-2">Use your invite link</Link>
