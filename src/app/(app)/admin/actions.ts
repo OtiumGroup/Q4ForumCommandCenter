@@ -116,6 +116,14 @@ export async function postBroadcast(
 
   if (error) return { ok: false, message: error.message };
 
+  // Also push to members who've turned on device notifications (best-effort).
+  try {
+    const { sendPushToAll } = await import("@/lib/push");
+    await sendPushToAll({ title, body, url: "/home", tag: "broadcast" });
+  } catch {
+    // Never block the broadcast if push isn't configured or fails.
+  }
+
   revalidatePath("/admin");
   revalidatePath("/home");
   return { ok: true, message: "Broadcast sent to all members." };

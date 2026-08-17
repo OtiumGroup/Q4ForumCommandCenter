@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AppearanceControls } from "@/components/shared/appearance-controls";
+import { PushToggle } from "@/components/shared/push-toggle";
 import { setNotificationPref, changePassword, changeEmail } from "./actions";
 
 function initials(name: string | null) {
@@ -212,6 +213,18 @@ export function SettingsPanel({
               }}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Bell className="h-4 w-4 text-accent" /> Push notifications
+          </CardTitle>
+          <CardDescription>Get a heads-up on this device for birthdays and forum announcements.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PushToggle />
         </CardContent>
       </Card>
 
