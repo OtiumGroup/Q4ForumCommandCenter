@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FORUM_POSITIONS } from "@/lib/constitution-content";
+import { FORUM_POSITIONS, DEEP_DIVE_ROLES } from "@/lib/constitution-content";
 
 function initials(name: string | null) {
   if (!name) return "?";
@@ -64,6 +64,32 @@ export default async function PositionsPage() {
       <p className="mt-6 text-xs text-muted-foreground">
         Positions are assigned by the moderator and run July 1, 2026 – June 30, 2027.
       </p>
+
+      <div className="mt-10">
+        <h2 className="font-display text-xl font-semibold tracking-tight">Deep Dive Roles</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          These rotate each meeting — filled per Deep Dive / presentation rather than for the year.
+        </p>
+        <div className="mt-3 space-y-3">
+          {DEEP_DIVE_ROLES.map((r) => (
+            <div key={r.name} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-display text-lg font-semibold tracking-tight">{r.name}</h3>
+                <span className="rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground">Each meeting</span>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{r.desc}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-2.5 py-1 text-[11px] text-secondary-foreground">
+                  <span className="font-semibold uppercase tracking-wide text-muted-foreground">Term</span> {r.term}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-2.5 py-1 text-[11px] text-secondary-foreground">
+                  <span className="font-semibold uppercase tracking-wide text-muted-foreground">Selection</span> {r.selection}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
