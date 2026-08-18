@@ -94,7 +94,7 @@ export function PushToggle() {
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: appKey,
+        applicationServerKey: appKey as BufferSource,
       });
       const json = sub.toJSON();
       if (!json.keys?.p256dh || !json.keys?.auth) {
