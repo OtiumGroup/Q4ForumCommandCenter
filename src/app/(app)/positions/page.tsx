@@ -48,6 +48,14 @@ export default async function PositionsPage() {
                 )}
               </div>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.desc}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-2.5 py-1 text-[11px] text-secondary-foreground">
+                  <span className="font-semibold uppercase tracking-wide text-muted-foreground">Term</span> {p.term}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-2.5 py-1 text-[11px] text-secondary-foreground">
+                  <span className="font-semibold uppercase tracking-wide text-muted-foreground">Selection</span> {p.selection}
+                </span>
+              </div>
             </div>
           );
         })}

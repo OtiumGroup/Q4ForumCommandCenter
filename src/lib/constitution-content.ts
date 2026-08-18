@@ -23,14 +23,14 @@ export const FOUNDATION: { label: string; value: string }[] = [
   { label: "Position Terms", value: "July 1, 2026 – June 30, 2027." },
 ];
 
-export const FORUM_POSITIONS: { key: string; name: string; desc: string }[] = [
-  { key: "moderator", name: "Moderator", desc: "Facilitates group communication and meetings based on EO's Moderator Training." },
-  { key: "moderator_elect", name: "Moderator-Elect", desc: "Assists the Moderator with Forum business and serves as a backup." },
-  { key: "accountability", name: "Accountability", desc: "Serves as timekeeper for meeting agendas \u2014 a visual or audible (\u2018knock\u2019) cue to keep the group on track \u2014 and enforces the Forum Constitution and fines." },
-  { key: "connection", name: "Connection", desc: "Plans social interactions and promotes chapter involvement for Forum members outside of monthly meetings." },
-  { key: "finance", name: "Finance", desc: "Records fines, retreat costs, meal expenses, and related payments." },
-  { key: "coaching", name: "Coaching", desc: "Manages the parking lot for \u201CDeep Dive\u201D open-coaching, and coordinates presentations with third-party subject-matter experts & EO SAPs." },
-  { key: "retreat_experience", name: "Retreat Experience", desc: "Plans the annual retreat event and logistics to create memorable experiences." },
+export const FORUM_POSITIONS: { key: string; name: string; desc: string; term: string; selection: string }[] = [
+  { key: "moderator", name: "Moderator", desc: "Prepares and distributes the meeting agenda a week in advance; asks members to volunteer for the other roles; leads the group through the scheduling and parking-lot processes; leads by example; represents the Forum in the moderator meeting with the Chapter Forum Officer; and attends Moderator Training and Moderator Summits.", term: "1 year", selection: "Election" },
+  { key: "moderator_elect", name: "Moderator-Elect", desc: "Facilitates the meeting whenever the Moderator is presenting, and attends moderator training to prepare to take over as Moderator. Manages the parking lot, keeps track of upcoming Deep Dive topics, and scribes for topics during the monthly 5% Reflection.", term: "1 year", selection: "Election" },
+  { key: "accountability", name: "Accountability", desc: "Serves as the Forum\u2019s timekeeper \u2014 giving warnings as time elapses and a clear cue when time is up to keep the group on track \u2014 and enforces the Forum Constitution and Schedule of Fines.", term: "1 year", selection: "Volunteer" },
+  { key: "connection", name: "Connection", desc: "Plans and organizes the Forum\u2019s social meetings and events \u2014 holiday party, family summer picnic, and the like \u2014 and promotes chapter involvement between monthly meetings.", term: "1 year", selection: "Volunteer" },
+  { key: "finance", name: "Finance", desc: "Maintains Forum funds and keeps records for fines, dues, retreat costs, meals, and group activities; tracks absence, tardiness, and the group roster; and handles meeting logistics and housekeeping minutes.", term: "1 year", selection: "Volunteer" },
+  { key: "coaching", name: "Coaching", desc: "Manages the parking lot for \u201CDeep Dive\u201D open-coaching sessions; meets with the presenter in advance and leads the group through the communication starter during the presentation; and coordinates presentations with third-party subject-matter experts and EO SAPs.", term: "1 year", selection: "Volunteer" },
+  { key: "retreat_experience", name: "Retreat Experience", desc: "Plans and organizes the annual retreat and its logistics to create a memorable experience; may split logistics and content between people.", term: "Variable", selection: "Volunteer" },
 ];
 
 export const SECTIONS: ConSection[] = [
