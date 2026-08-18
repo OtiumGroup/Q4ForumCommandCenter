@@ -33,12 +33,11 @@ export const FORUM_POSITIONS: { key: string; name: string; desc: string; term: s
   { key: "retreat_experience", name: "Retreat Experience", desc: "Plans and organizes the annual retreat and its logistics to create a memorable experience; may split logistics and content between people.", term: "Variable", selection: "Volunteer" },
 ];
 
-// Per-meeting Deep Dive roles (rotate each meeting; not annual assignments).
 export const DEEP_DIVE_ROLES: { name: string; desc: string; term: string; selection: string }[] = [
-  { name: "Presenter", desc: "Prepares by meeting with a coach in advance and completing the Deep Dive worksheet, then presents their topic to the Forum.", term: "1 meeting", selection: "Parking Lot" },
-  { name: "Coach", desc: "Meets with the presenter before the meeting and leads the group through the communication starter during the presentation.", term: "1 meeting", selection: "Last presenter, or presenter selects" },
-  { name: "Time-Keeper", desc: "Gives warnings as time elapses and a clear notice when time is up, keeping each segment on schedule.", term: "1 meeting / 1 year", selection: "Volunteer" },
-  { name: "EO Forum Mindset Observer", desc: "Gives notice and gentle assistance whenever the EO Forum Mindset \u2014 experience sharing, no advice, confidentiality \u2014 isn\u2019t being followed.", term: "1 meeting", selection: "Volunteer, or Moderator appoints" },
+  { name: "Presenter", desc: "Prepares by meeting with a Coach in advance and completing the Deep Dive worksheet, then presents their topic to the Forum.", term: "1 meeting", selection: "Parking Lot" },
+  { name: "Coach", desc: "Meets with the Presenter before the meeting and leads the group through the communication starter during the presentation.", term: "1 meeting", selection: "Last Presenter, or Presenter selects" },
+  { name: "Time-Keeper", desc: "Gives warnings as time elapses and a clear notice when time is up, keeping each segment on track.", term: "1 meeting or 1 year", selection: "Volunteer" },
+  { name: "EO Forum Mindset Observer", desc: "Watches for and gently flags when the EO Forum Mindset \u2014 experience-sharing over advice, and confidentiality \u2014 isn\u2019t being followed, and helps the group re-center.", term: "1 meeting", selection: "Volunteer or Moderator appoints" },
 ];
 
 export const SECTIONS: ConSection[] = [
