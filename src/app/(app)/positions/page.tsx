@@ -11,13 +11,13 @@ function initials(name: string | null) {
 export default async function PositionsPage() {
   const supabase = await createClient();
   const [{ data: rows }, { data: members }] = await Promise.all([
-    supabase.from("forum_positions").select("key, member_id"),
+    supabase.from("forum_positions").select("key, member_id, member_id_2"),
     supabase.from("profiles").select("id, full_name, photo_url").neq("status", "suspended"),
   ]);
 
   const memberById = new Map((members ?? []).map((m) => [m.id, m] as const));
-  const assignmentByKey = new Map((rows ?? []).map((r) => [r.key, r.member_id] as const));
-  const assignedCount = FORUM_POSITIONS.filter((p) => assignmentByKey.get(p.key)).length;
+  const assignmentByKey = new Map((rows ?? []).map((r) => [r.key, [r.member_id, r.member_id_2].filter(Boolean) as string[]] as const));
+  const assignedCount = FORUM_POSITIONS.filter((p) => (assignmentByKey.get(p.key) ?? []).length > 0).length;
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -29,19 +29,22 @@ export default async function PositionsPage() {
 
       <div className="space-y-3">
         {FORUM_POSITIONS.map((p) => {
-          const mid = assignmentByKey.get(p.key);
-          const m = mid ? memberById.get(mid) : null;
+          const holders = (assignmentByKey.get(p.key) ?? []).map((id) => memberById.get(id)).filter(Boolean) as { id: string; full_name: string | null; photo_url: string | null }[];
           return (
             <div key={p.key} className="rounded-xl border border-border bg-card p-4 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-display text-lg font-semibold tracking-tight">{p.name}</h2>
-                {m ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-7 w-7">
-                      {m.photo_url ? <AvatarImage src={m.photo_url} alt={m.full_name ?? ""} /> : null}
-                      <AvatarFallback className="bg-secondary text-[10px] text-secondary-foreground">{initials(m.full_name)}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium text-foreground">{m.full_name}</span>
+                {holders.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    {holders.map((m) => (
+                      <div key={m.id} className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7">
+                          {m.photo_url ? <AvatarImage src={m.photo_url} alt={m.full_name ?? ""} /> : null}
+                          <AvatarFallback className="bg-secondary text-[10px] text-secondary-foreground">{initials(m.full_name)}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium text-foreground">{m.full_name}</span>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <span className="rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground">Unassigned</span>
