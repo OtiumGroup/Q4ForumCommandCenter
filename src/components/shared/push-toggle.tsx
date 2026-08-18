@@ -72,9 +72,29 @@ export function PushToggle() {
         return;
       }
       const reg = await navigator.serviceWorker.ready;
+
+      // Clear any stale subscription (e.g. from an earlier attempt or an old
+      // key) so a fresh subscribe can't fail with "different applicationServerKey".
+      try {
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) await existing.unsubscribe();
+      } catch {
+        /* ignore */
+      }
+
+      let appKey: Uint8Array;
+      try {
+        appKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY!);
+        if (appKey.length !== 65) throw new Error("bad length");
+      } catch {
+        toast.error("Notifications key looks misconfigured — the admin needs to re-check the VAPID public key in the app settings.");
+        setBusy(false);
+        return;
+      }
+
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY!),
+        applicationServerKey: appKey,
       });
       const json = sub.toJSON();
       if (!json.keys?.p256dh || !json.keys?.auth) {
@@ -94,8 +114,9 @@ export function PushToggle() {
       } else {
         toast.error("Couldn't save. Try again.");
       }
-    } catch {
-      toast.error("Couldn't enable notifications on this device.");
+    } catch (e) {
+      const msg = (e as { message?: string })?.message || "unknown error";
+      toast.error("Couldn't enable notifications: " + msg);
     }
     setBusy(false);
   }
