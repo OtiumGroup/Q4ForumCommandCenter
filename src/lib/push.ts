@@ -2,9 +2,16 @@ import "server-only";
 import webpush from "web-push";
 import { createClient } from "@supabase/supabase-js";
 
-const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:brian@theotiumgroup.com";
+// VAPID values are pasted into env vars by hand and have repeatedly picked up
+// stray/invisible characters (a dropped letter, a "smart" ‹ quote, whitespace).
+// Keys are strictly base64url, so strip anything that isn't; the subject is a
+// mailto:/https: URL, so strip non-printable-ASCII.
+const cleanKey = (s?: string) => (s || "").replace(/[^A-Za-z0-9_-]/g, "");
+const cleanSubject = (s?: string) => (s || "").trim().replace(/[^\x20-\x7E]/g, "");
+
+const VAPID_PUBLIC = cleanKey(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
+const VAPID_PRIVATE = cleanKey(process.env.VAPID_PRIVATE_KEY);
+const VAPID_SUBJECT = cleanSubject(process.env.VAPID_SUBJECT) || "mailto:brian@theotiumgroup.com";
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
