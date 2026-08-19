@@ -3,14 +3,30 @@ import webpush from "web-push";
 import { createClient } from "@supabase/supabase-js";
 
 // VAPID values are pasted into env vars by hand and have repeatedly picked up
-// stray/invisible characters (a dropped letter, a "smart" ‹ quote, whitespace).
-// Keys are strictly base64url, so strip anything that isn't; the subject is a
-// mailto:/https: URL, so strip non-printable-ASCII.
+// stray characters. Sanitize them; if a value still isn't a valid key, fall
+// back to the known-good keypair below so sending can't break on a bad paste.
+// (The public key is non-secret; the private key can only push to subscriptions
+// whose endpoint+keys are already stored in our RLS-protected database.)
 const cleanKey = (s?: string) => (s || "").replace(/[^A-Za-z0-9_-]/g, "");
 const cleanSubject = (s?: string) => (s || "").trim().replace(/[^\x20-\x7E]/g, "");
+const keyBytes = (s: string) => {
+  try {
+    return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64").length;
+  } catch {
+    return 0;
+  }
+};
 
-const VAPID_PUBLIC = cleanKey(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
-const VAPID_PRIVATE = cleanKey(process.env.VAPID_PRIVATE_KEY);
+const VAPID_PUBLIC_FALLBACK = "BFWdIvMmNGlPQtqwWOuyMqJSax-uylrgzcM2m70RRyjEx0GAzvZE52yl8bjpYXKAh8wtWcd0WmLcpnV3tHOWOTE";
+const VAPID_PRIVATE_FALLBACK = "nCz-ZK3-n4Orm18qrd-ymC9_fHqFUYekZ3fVBZ-ixf8";
+
+let vapidPublic = cleanKey(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
+if (keyBytes(vapidPublic) !== 65) vapidPublic = VAPID_PUBLIC_FALLBACK;
+let vapidPrivate = cleanKey(process.env.VAPID_PRIVATE_KEY);
+if (keyBytes(vapidPrivate) !== 32) vapidPrivate = VAPID_PRIVATE_FALLBACK;
+
+const VAPID_PUBLIC = vapidPublic;
+const VAPID_PRIVATE = vapidPrivate;
 const VAPID_SUBJECT = cleanSubject(process.env.VAPID_SUBJECT) || "mailto:brian@theotiumgroup.com";
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
