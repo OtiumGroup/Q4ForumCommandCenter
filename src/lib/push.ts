@@ -2,32 +2,14 @@ import "server-only";
 import webpush from "web-push";
 import { createClient } from "@supabase/supabase-js";
 
-// VAPID values are pasted into env vars by hand and have repeatedly picked up
-// stray characters. Sanitize them; if a value still isn't a valid key, fall
-// back to the known-good keypair below so sending can't break on a bad paste.
-// (The public key is non-secret; the private key can only push to subscriptions
-// whose endpoint+keys are already stored in our RLS-protected database.)
-const cleanKey = (s?: string) => (s || "").replace(/[^A-Za-z0-9_-]/g, "");
-const cleanSubject = (s?: string) => (s || "").trim().replace(/[^\x20-\x7E]/g, "");
-const keyBytes = (s: string) => {
-  try {
-    return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64").length;
-  } catch {
-    return 0;
-  }
-};
-
-const VAPID_PUBLIC_FALLBACK = "BFWdIvMmNGlPQtqwWOuyMqJSax-uylrgzcM2m70RRyjEx0GAzvZE52yl8bjpYXKAh8wtWcd0WmLcpnV3tHOWOTE";
-const VAPID_PRIVATE_FALLBACK = "nCz-ZK3-n4Orm18qrd-ymC9_fHqFUYekZ3fVBZ-ixf8";
-
-let vapidPublic = cleanKey(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
-if (keyBytes(vapidPublic) !== 65) vapidPublic = VAPID_PUBLIC_FALLBACK;
-let vapidPrivate = cleanKey(process.env.VAPID_PRIVATE_KEY);
-if (keyBytes(vapidPrivate) !== 32) vapidPrivate = VAPID_PRIVATE_FALLBACK;
-
-const VAPID_PUBLIC = vapidPublic;
-const VAPID_PRIVATE = vapidPrivate;
-const VAPID_SUBJECT = cleanSubject(process.env.VAPID_SUBJECT) || "mailto:brian@theotiumgroup.com";
+// The VAPID keypair is pinned in code. Hand-pasted Vercel env values repeatedly
+// arrived corrupted (a stray non-ASCII character) and broke sends with a
+// ByteString error, so the env is ignored for these three. The public key is
+// non-secret; the private key can only push to subscriptions already stored in
+// our RLS-protected DB. (Rotate + move back to env later if desired.)
+const VAPID_PUBLIC = "BFWdIvMmNGlPQtqwWOuyMqJSax-uylrgzcM2m70RRyjEx0GAzvZE52yl8bjpYXKAh8wtWcd0WmLcpnV3tHOWOTE";
+const VAPID_PRIVATE = "nCz-ZK3-n4Orm18qrd-ymC9_fHqFUYekZ3fVBZ-ixf8";
+const VAPID_SUBJECT = "mailto:brian@theotiumgroup.com";
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -96,6 +78,7 @@ export async function sendPushToMember(memberId: string, payload: PushPayload): 
       await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, body);
       sent++;
     } catch (err: unknown) {
+      console.error("[push] sendPushToMember send error:", err);
       lastError = (err as { body?: string; message?: string })?.body || (err as { message?: string })?.message || "send failed";
     }
   }

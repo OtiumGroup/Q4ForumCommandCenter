@@ -49,7 +49,7 @@ export async function sendTestPush(): Promise<{ ok: boolean; sent: number; reaso
 
   const { sendPushToMember } = await import("@/lib/push");
   return sendPushToMember(user.id, {
-    title: "Test notification 🔔",
+    title: "Test notification",
     body: "Your notifications are working. This is a test from your Command Center.",
     url: "/home",
     tag: "test",
