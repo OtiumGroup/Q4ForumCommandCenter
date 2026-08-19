@@ -39,3 +39,19 @@ export async function deletePushSubscription(endpoint: string): Promise<{ ok: bo
   await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint).eq("member_id", user.id);
   return { ok: true };
 }
+
+export async function sendTestPush(): Promise<{ ok: boolean; sent: number; reason?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, sent: 0, reason: "Not signed in." };
+
+  const { sendPushToMember } = await import("@/lib/push");
+  return sendPushToMember(user.id, {
+    title: "Test notification 🔔",
+    body: "Your notifications are working. This is a test from your Command Center.",
+    url: "/home",
+    tag: "test",
+  });
+}

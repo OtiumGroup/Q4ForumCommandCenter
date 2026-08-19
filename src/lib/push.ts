@@ -56,3 +56,25 @@ export async function sendPushToAll(payload: PushPayload): Promise<{ ok: boolean
   if (stale.length) await supabase.from("push_subscriptions").delete().in("id", stale);
   return { ok: true, sent, removed: stale.length };
 }
+
+/** Send a push to a single member's own devices (used for the "test" button). */
+export async function sendPushToMember(memberId: string, payload: PushPayload): Promise<{ ok: boolean; sent: number; reason?: string }> {
+  if (!pushConfigured() || !ensureConfigured()) return { ok: false, sent: 0, reason: "Push isn't fully configured on the server yet." };
+  const supabase = adminClient();
+  const { data: subs, error } = await supabase.from("push_subscriptions").select("id, endpoint, p256dh, auth").eq("member_id", memberId);
+  if (error) return { ok: false, sent: 0, reason: error.message };
+  if (!subs || subs.length === 0) return { ok: false, sent: 0, reason: "No registered device found for this account." };
+
+  const body = JSON.stringify({ title: payload.title, body: payload.body, url: payload.url ?? "/home", tag: payload.tag });
+  let sent = 0;
+  let lastError: string | undefined;
+  for (const s of subs) {
+    try {
+      await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, body);
+      sent++;
+    } catch (err: unknown) {
+      lastError = (err as { body?: string; message?: string })?.body || (err as { message?: string })?.message || "send failed";
+    }
+  }
+  return { ok: sent > 0, sent, reason: sent > 0 ? undefined : lastError };
+}

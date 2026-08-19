@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { savePushSubscription, deletePushSubscription } from "@/app/(app)/push-actions";
+import { savePushSubscription, deletePushSubscription, sendTestPush } from "@/app/(app)/push-actions";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
@@ -138,6 +138,18 @@ export function PushToggle() {
     setBusy(false);
   }
 
+  async function sendTest() {
+    setBusy(true);
+    try {
+      const r = await sendTestPush();
+      if (r.ok) toast.success("Test sent — check your notifications 🔔");
+      else toast.error(r.reason || "Couldn't send the test notification.");
+    } catch {
+      toast.error("Couldn't send the test notification.");
+    }
+    setBusy(false);
+  }
+
   if (supported === false) {
     return <p className="text-sm text-muted-foreground">This device or browser doesn&apos;t support push notifications.</p>;
   }
@@ -158,9 +170,14 @@ export function PushToggle() {
         </p>
       )}
       {subscribed ? (
-        <Button variant="outline" onClick={disable} disabled={busy}>
-          <BellOff className="mr-1.5 h-4 w-4" /> Turn off on this device
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={disable} disabled={busy}>
+            <BellOff className="mr-1.5 h-4 w-4" /> Turn off on this device
+          </Button>
+          <Button variant="secondary" onClick={sendTest} disabled={busy}>
+            Send a test notification
+          </Button>
+        </div>
       ) : (
         <Button onClick={enable} disabled={busy}>
           <Bell className="mr-1.5 h-4 w-4" /> Enable notifications
